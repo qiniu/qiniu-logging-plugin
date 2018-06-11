@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Configuration status="INFO" xmlns="http://logging.apache.org/log4j/2.0/config">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} [%m] - %msg%n"></PatternLayout>
+        </Console>
+
+        <Log4j2QiniuAppender name="Qiniu" target="qiniudemo1"
+                             accessKey="ak"
+                             secretKey="sk">
+            <PatternLayout
+                    pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} [%marker] - msg: %msg%n"></PatternLayout>
+        </Log4j2QiniuAppender>
+    </Appenders>
+    <Loggers>
+        <!--<Logger name="mylogger" level="debug">-->
+        <!--<AppenderRef ref="Console"></AppenderRef>-->
+        <!--</Logger>-->
+        <Logger name="com.qiniu.log4j2" level="INFO"/>
+
+        <Root level="TRACE">
+            <AppenderRef ref="Console"></AppenderRef>
+        </Root>
+
+    </Loggers>
+</Configuration>
