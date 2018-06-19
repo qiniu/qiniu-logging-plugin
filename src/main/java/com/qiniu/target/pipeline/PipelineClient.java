@@ -4,6 +4,7 @@ import com.qiniu.pandora.common.Config;
 import com.qiniu.pandora.common.PandoraClient;
 import com.qiniu.pandora.common.QiniuException;
 import com.qiniu.pandora.http.Client;
+import com.qiniu.pandora.http.Response;
 import com.qiniu.pandora.util.Json;
 import com.qiniu.pandora.util.StringMap;
 
@@ -43,6 +44,7 @@ public class PipelineClient {
         }
         return exists;
     }
+
 
     /*
     * Start workflow

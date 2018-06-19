@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -50,6 +51,42 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
         this.executorService = Executors.newCachedThreadPool();
         this.logSender = new LogSender(pipelineRepo, client);
         this.rwLock = new ReentrantLock(true);
+        new Thread(new Runnable() {
+            public void run() {
+                for (; ; ) {
+                    intervalFlush();
+                    try {
+                        TimeUnit.SECONDS.sleep(5);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+    }
+
+    public void intervalFlush() {
+        this.rwLock.lock();
+        final byte[] postBody;
+        try {
+            if (batch.getSize() > 0) {
+                postBody = batch.toString().getBytes("utf-8");
+                this.executorService.submit(new Runnable() {
+                    public void run() {
+                        try {
+                            logSender.send(postBody);
+                        } catch (QiniuException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+                batch.clear();
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        this.rwLock.unlock();
     }
 
     public void append(LogEvent logEvent) {
@@ -78,7 +115,6 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
             try {
                 final byte[] postBody = batch.toString().getBytes("utf-8");
                 this.executorService.submit(new Runnable() {
-                    @Override
                     public void run() {
                         try {
                             logSender.send(postBody);
@@ -115,8 +151,8 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
                                                      @PluginAttribute("logdbRepo") String logdbRepo,
                                                      @PluginAttribute("accessKey") String accessKey,
                                                      @PluginAttribute("secretKey") String secretKey,
-                                                     @PluginElement("Filter") final Filter filter,
-                                                     @PluginElement("Layout") Layout<? extends Serializable> layout,
+                                                     @PluginElement("filter") final Filter filter,
+                                                     @PluginElement("layout") Layout<? extends Serializable> layout,
                                                      @PluginAttribute("ignoreExceptions") boolean ignoreExceptions) {
         Auth auth = Auth.create(accessKey, secretKey);
         PandoraClient client = new PandoraClientImpl(auth, "");
@@ -190,7 +226,12 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
             }
 
             //start workflow
-            pipelineClient.startWorkflow(workflowName);
+            try {
+                pipelineClient.startWorkflow(workflowName);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                //@TODO improve it later
+            }
         } catch (Exception e) {
             e.printStackTrace();
             //@TODO check what to return here
