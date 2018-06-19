@@ -4,6 +4,7 @@ import com.qiniu.pandora.common.Config;
 import com.qiniu.pandora.common.PandoraClient;
 import com.qiniu.pandora.common.PandoraClientImpl;
 import com.qiniu.pandora.common.QiniuException;
+import com.qiniu.pandora.http.Response;
 import com.qiniu.pandora.pipeline.points.Batch;
 import com.qiniu.pandora.pipeline.points.Point;
 import com.qiniu.pandora.util.Auth;
@@ -71,10 +72,11 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
         try {
             if (batch.getSize() > 0) {
                 postBody = batch.toString().getBytes("utf-8");
-                this.executorService.submit(new Runnable() {
+                this.executorService.execute(new Runnable() {
                     public void run() {
                         try {
-                            logSender.send(postBody);
+                            Response response = logSender.send(postBody);
+                            response.close();
                         } catch (QiniuException e) {
                             e.printStackTrace();
                         }
@@ -114,10 +116,11 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
         if (!batch.canAdd(point)) {
             try {
                 final byte[] postBody = batch.toString().getBytes("utf-8");
-                this.executorService.submit(new Runnable() {
+                this.executorService.execute(new Runnable() {
                     public void run() {
                         try {
-                            logSender.send(postBody);
+                            Response response = logSender.send(postBody);
+                            response.close();
                         } catch (QiniuException e) {
                             e.printStackTrace();
                         }
@@ -155,7 +158,7 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
                                                      @PluginElement("layout") Layout<? extends Serializable> layout,
                                                      @PluginAttribute("ignoreExceptions") boolean ignoreExceptions) {
         Auth auth = Auth.create(accessKey, secretKey);
-        PandoraClient client = new PandoraClientImpl(auth, "");
+        PandoraClient client = new PandoraClientImpl(auth);
         PipelineClient pipelineClient = new PipelineClient(client);
         LogdbClient logdbClient = new LogdbClient(client);
         try {
