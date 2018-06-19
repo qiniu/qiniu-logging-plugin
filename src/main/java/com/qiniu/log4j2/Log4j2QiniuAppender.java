@@ -189,7 +189,8 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
                 pipelineClient.createExport(pipelineRepo, exportName, createExportInput);
             }
 
-
+            //start workflow
+            pipelineClient.startWorkflow(workflowName);
         } catch (Exception e) {
             e.printStackTrace();
             //@TODO check what to return here

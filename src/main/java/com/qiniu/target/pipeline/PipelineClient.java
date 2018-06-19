@@ -44,6 +44,14 @@ public class PipelineClient {
         return exists;
     }
 
+    /*
+    * Start workflow
+    * */
+    public void startWorkflow(String workflowName) throws Exception {
+        String postUrl = String.format("%s/v2/workflows/%s/start", this.pipelineHost, workflowName);
+        this.client.post(postUrl, null, new StringMap(), "");
+    }
+
     /**
      * Create pipeline repo
      */
