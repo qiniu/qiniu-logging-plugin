@@ -42,24 +42,30 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @Plugin(name = "Log4j2QiniuAppender", category = "Core", elementType = "appender", printObject = true)
 public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, Analyzer, Whence, WFStatus {
+    private static int DefaultAutoFlushInterval = 5;//5 seconds
     private Lock rwLock;
     private Batch batch;
     private ExecutorService executorService;
     private LogSender logSender;
 
     private Log4j2QiniuAppender(String name, Filter filter, Layout<? extends Serializable> layout,
-                                boolean ignoreExceptions, String pipelineRepo, PandoraClient client) {
+                                boolean ignoreExceptions, String pipelineRepo, PandoraClient client, int autoFlushInterval) {
         super(name, filter, layout, ignoreExceptions);
         this.batch = new Batch();
         this.executorService = Executors.newCachedThreadPool();
         this.logSender = new LogSender(pipelineRepo, client);
+
+        if (autoFlushInterval <= 0) {
+            autoFlushInterval = DefaultAutoFlushInterval;
+        }
         this.rwLock = new ReentrantLock(true);
+        final int autoFlushSeconds = autoFlushInterval;
         new Thread(new Runnable() {
             public void run() {
                 for (; ; ) {
                     intervalFlush();
                     try {
-                        TimeUnit.SECONDS.sleep(5);
+                        TimeUnit.SECONDS.sleep(autoFlushSeconds);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -153,13 +159,16 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
     /**
      * create the qiniu logdb appender
      *
-     * @param name             - name
-     * @param pipelineRepo     - pipeline repo
-     * @param accessKey        - access key
-     * @param secretKey        - secret key
-     * @param filter           -filter
-     * @param layout           -layout
-     * @param ignoreExceptions -ignoreExceptions
+     * @param name              name
+     * @param workflowName      pandora workflow name
+     * @param pipelineRepo      pandora pipeline repo name
+     * @param logdbRepo         pandora logdb repo name
+     * @param autoFlushInterval auto flush log interval in seconds
+     * @param accessKey         qiniu access key
+     * @param secretKey         qiniu secret key
+     * @param filter            filter
+     * @param layout            layout
+     * @param ignoreExceptions  ignoreExceptions
      */
     @PluginFactory
     public static Log4j2QiniuAppender createAppender(@PluginAttribute("name") String name,
@@ -168,6 +177,7 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
                                                      @PluginAttribute("logdbRepo") String logdbRepo,
                                                      @PluginAttribute("accessKey") String accessKey,
                                                      @PluginAttribute("secretKey") String secretKey,
+                                                     @PluginAttribute("autoFlushInterval") int autoFlushInterval,
                                                      @PluginElement("filter") final Filter filter,
                                                      @PluginElement("layout") Layout<? extends Serializable> layout,
                                                      @PluginAttribute("ignoreExceptions") boolean ignoreExceptions) {
@@ -253,6 +263,6 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
             return null;
         }
 
-        return new Log4j2QiniuAppender(name, filter, layout, ignoreExceptions, pipelineRepo, client);
+        return new Log4j2QiniuAppender(name, filter, layout, ignoreExceptions, pipelineRepo, client, autoFlushInterval);
     }
 }
