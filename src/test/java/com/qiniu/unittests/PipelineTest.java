@@ -1,5 +1,8 @@
 package com.qiniu.unittests;
 
+import com.qiniu.pandora.common.PandoraClient;
+import com.qiniu.pandora.common.PandoraClientImpl;
+import com.qiniu.pandora.util.Auth;
 import com.qiniu.target.pipeline.CreateWorkflowInput;
 import com.qiniu.target.pipeline.PipelineClient;
 import org.junit.Assert;
@@ -14,7 +17,9 @@ public class PipelineTest {
 
     @Before
     public void tearUp() {
-        this.client = new PipelineClient(ConfigTest.ACCESS_KEY, ConfigTest.SECRET_KEY);
+        Auth auth= Auth.create(ConfigTest.ACCESS_KEY,ConfigTest.SECRET_KEY);
+        PandoraClient pandoraClient=new PandoraClientImpl(auth,"");
+        this.client = new PipelineClient(pandoraClient);
     }
 
     @Test

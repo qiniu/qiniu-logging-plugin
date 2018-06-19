@@ -29,9 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Created by jemy on 2018/6/8.
@@ -43,7 +41,6 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
     private Lock rwLock;
     private Batch batch;
     private ExecutorService executorService;
-    private PandoraClient pandoraClient;
     private LogSender logSender;
 
     private Log4j2QiniuAppender(String name, Filter filter, Layout<? extends Serializable> layout,
@@ -60,7 +57,11 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
         point.append("timestamp", logEvent.getTimeMillis());
         point.append("level", logEvent.getLevel().toString());
         point.append("logger", logEvent.getLoggerName());
-        point.append("marker", logEvent.getMarker().toString());
+        if (logEvent.getMarker() != null) {
+            point.append("marker", logEvent.getMarker().toString());
+        } else {
+            point.append("marker", "");
+        }
         point.append("message", logEvent.getMessage().getFormattedMessage());
         point.append("thread_name", logEvent.getThreadName());
         point.append("thread_id", logEvent.getThreadId());
@@ -182,10 +183,12 @@ public class Log4j2QiniuAppender extends AbstractAppender implements ValueType, 
                 exportFields.put("message", "#message");
                 exportFields.put("thread_name", "#thread_name");
                 exportFields.put("thread_id", "#thread_id");
+                exportFields.put("thread_priority", "#thread_priority");
                 exportFields.put("exception", "#exception");
                 createExportInput.spec = new ExportLogdbSpec(logdbRepo, exportFields, true, true);
                 pipelineClient.createExport(pipelineRepo, exportName, createExportInput);
             }
+
 
         } catch (Exception e) {
             e.printStackTrace();

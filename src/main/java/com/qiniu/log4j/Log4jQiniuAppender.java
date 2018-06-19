@@ -1,7 +1,6 @@
 package com.qiniu.log4j;
 
 import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.WriterAppender;
 import org.apache.log4j.spi.LoggingEvent;
 
 /**

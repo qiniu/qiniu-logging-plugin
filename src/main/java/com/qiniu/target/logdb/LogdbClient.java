@@ -3,11 +3,8 @@ package com.qiniu.target.logdb;
 
 import com.qiniu.pandora.common.Config;
 import com.qiniu.pandora.common.PandoraClient;
-import com.qiniu.pandora.common.PandoraClientImpl;
 import com.qiniu.pandora.common.QiniuException;
 import com.qiniu.pandora.http.Client;
-import com.qiniu.pandora.logdb.LogDBClient;
-import com.qiniu.pandora.util.Auth;
 import com.qiniu.pandora.util.Json;
 import com.qiniu.pandora.util.StringMap;
 import com.qiniu.target.common.Analyzer;

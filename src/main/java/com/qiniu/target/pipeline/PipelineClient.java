@@ -2,10 +2,8 @@ package com.qiniu.target.pipeline;
 
 import com.qiniu.pandora.common.Config;
 import com.qiniu.pandora.common.PandoraClient;
-import com.qiniu.pandora.common.PandoraClientImpl;
 import com.qiniu.pandora.common.QiniuException;
 import com.qiniu.pandora.http.Client;
-import com.qiniu.pandora.util.Auth;
 import com.qiniu.pandora.util.Json;
 import com.qiniu.pandora.util.StringMap;
 
