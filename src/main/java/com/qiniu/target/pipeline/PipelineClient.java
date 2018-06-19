@@ -45,6 +45,14 @@ public class PipelineClient {
         return exists;
     }
 
+    /**
+     * Check workflow status
+     * */
+    public WorkflowStatus workflowStatus(String workflowName) throws Exception{
+        String getUrl=String.format("%s/v2/workflows/%s/status",this.pipelineHost,workflowName);
+        Response response=this.client.get(getUrl,new StringMap());
+        return response.jsonToObject(WorkflowStatus.class);
+    }
 
     /*
     * Start workflow
