@@ -7,7 +7,7 @@ public interface Analyzer {
     String StandardAnalyzer = "standard";
     String SimpleAnalyzer = "simple";
     String WhitespaceAnalyzer = "whitespace";
-    String StopAnalyzer = "stop";
+    String NoAnalyzer = "no";
     String AnsjAnalyzer = "index_ansj";
     String DicAnajAnalyzer = "dic_ansj";
     String SearchAnsjAnalyzer = "search_ansj";

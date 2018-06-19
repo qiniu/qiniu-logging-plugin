@@ -2,6 +2,7 @@ package com.qiniu.target.logdb;
 
 
 import com.qiniu.pandora.common.Config;
+import com.qiniu.pandora.common.PandoraClient;
 import com.qiniu.pandora.common.PandoraClientImpl;
 import com.qiniu.pandora.common.QiniuException;
 import com.qiniu.pandora.http.Client;
@@ -16,17 +17,16 @@ import com.qiniu.target.common.ValueType;
  * Created by jemy on 2018/6/11.
  */
 public class LogdbClient implements ValueType, Analyzer {
-    private PandoraClientImpl client;
     private String logdbHost;
+    private PandoraClient client;
 
-    public LogdbClient(String accessKey, String secretKey) {
-        this(accessKey, secretKey, "https://logdb.qiniu.com");
+    public LogdbClient(PandoraClient client) {
+        this(client, "https://logdb.qiniu.com");
     }
 
-    public LogdbClient(String accessKey, String secretKey, String logdbHost) {
-        Auth auth = Auth.create(accessKey, secretKey);
+    public LogdbClient(PandoraClient client, String logdbHost) {
         this.logdbHost = logdbHost;
-        this.client = new PandoraClientImpl(auth, "");
+        this.client = client;
     }
 
     /**

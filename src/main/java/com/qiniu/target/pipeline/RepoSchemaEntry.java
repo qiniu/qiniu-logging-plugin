@@ -12,6 +12,10 @@ public class RepoSchemaEntry {
     public String valType;
     @SerializedName("required")
     public boolean required;
-    @SerializedName("elemtype")
-    public String elemType;
+
+    public RepoSchemaEntry(String key, String valType, boolean required) {
+        this.key = key;
+        this.valType = valType;
+        this.required = required;
+    }
 }

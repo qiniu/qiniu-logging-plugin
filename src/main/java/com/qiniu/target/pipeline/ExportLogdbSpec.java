@@ -17,4 +17,10 @@ public class ExportLogdbSpec {
     @SerializedName("omitEmpty")
     public boolean omitEmpty;
 
+    public ExportLogdbSpec(String destRepoName, Map<String, Object> doc, boolean omitInvalid, boolean omitEmpty) {
+        this.destRepoName = destRepoName;
+        this.doc = doc;
+        this.omitInvalid = omitInvalid;
+        this.omitEmpty = omitEmpty;
+    }
 }

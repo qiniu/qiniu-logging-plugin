@@ -1,6 +1,7 @@
 package com.qiniu.target.pipeline;
 
 import com.qiniu.pandora.common.Config;
+import com.qiniu.pandora.common.PandoraClient;
 import com.qiniu.pandora.common.PandoraClientImpl;
 import com.qiniu.pandora.common.QiniuException;
 import com.qiniu.pandora.http.Client;
@@ -12,17 +13,16 @@ import com.qiniu.pandora.util.StringMap;
  * Created by jemy on 2018/6/11.
  */
 public class PipelineClient {
-    private PandoraClientImpl client;
+    private PandoraClient client;
     private String pipelineHost;
 
-    public PipelineClient(String accessKey, String secretKey) {
-        this(accessKey, secretKey, "https://pipeline.qiniu.com");
+    public PipelineClient(PandoraClient client) {
+        this(client, "https://pipeline.qiniu.com");
     }
 
-    public PipelineClient(String accessKey, String secretKey, String pipelineHost) {
-        Auth auth = Auth.create(accessKey, secretKey);
+    public PipelineClient(PandoraClient client, String pipelineHost) {
         this.pipelineHost = pipelineHost;
-        this.client = new PandoraClientImpl(auth, "");
+        this.client = client;
     }
 
     /**
@@ -72,9 +72,26 @@ public class PipelineClient {
 
 
     /**
-     * Create export to logdb
+     * Create export to logdb or tsdb, etc
      */
-    public void createExportToLogdb() {
+    public void createExport(String repoName, String exportName, CreateExportInput exportInput) throws Exception {
+        String postUrl = String.format("%s/v2/repos/%s/exports/%s", this.pipelineHost, repoName, exportName);
+        String postBody = Json.encode(exportInput);
+        this.client.post(postUrl, postBody.getBytes(Config.UTF_8), new StringMap(), Client.JsonMime);
+    }
 
+    /*
+    * Check export exists or not
+    * */
+    public boolean exportExists(String repoName, String exportName) {
+        boolean exists = false;
+        String getUrl = String.format("%s/v2/repos/%s/exports/%s", this.pipelineHost, repoName, exportName);
+        try {
+            this.client.get(getUrl, new StringMap());
+            exists = true;
+        } catch (QiniuException e) {
+            //pass
+        }
+        return exists;
     }
 }
