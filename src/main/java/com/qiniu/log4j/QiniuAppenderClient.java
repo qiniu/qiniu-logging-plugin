@@ -27,8 +27,8 @@ public class QiniuAppenderClient implements ValueType, Analyzer, Whence, WFStatu
      * @param logdbRetention pandora logdb retention days
      */
     public static void createAppenderWorkflow(PandoraClient client, String workflowName, String workflowRegion,
-                                              String pipelineRepo, String logdbRepo, String logdbRetention
-    ) throws Exception {
+                                              String pipelineRepo, String logdbRepo, String logdbRetention)
+            throws Exception {
         PipelineClient pipelineClient = new PipelineClient(client);
         LogdbClient logdbClient = new LogdbClient(client);
 

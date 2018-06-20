@@ -5,6 +5,7 @@ import com.qiniu.pandora.common.PandoraClientImpl;
 import com.qiniu.pandora.util.Auth;
 import com.qiniu.target.pipeline.CreateWorkflowInput;
 import com.qiniu.target.pipeline.PipelineClient;
+import com.qiniu.target.pipeline.WorkflowStatus;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,14 +19,14 @@ public class PipelineTest {
     @Before
     public void tearUp() {
         Auth auth= Auth.create(ConfigTest.ACCESS_KEY,ConfigTest.SECRET_KEY);
-        PandoraClient pandoraClient=new PandoraClientImpl(auth,"");
+        PandoraClient pandoraClient=new PandoraClientImpl(auth);
         this.client = new PipelineClient(pandoraClient);
     }
 
     @Test
     public void testCreateWorkflow(){
         CreateWorkflowInput input=new CreateWorkflowInput();
-        input.workflowName="test11111";
+        input.workflowName="test1111";
         input.region="nb";
         input.comment="test 11111";
         try {
@@ -38,12 +39,19 @@ public class PipelineTest {
 
     @Test
     public void testGetWorkflow() {
-        String workflowName="test11111";
+        String workflowName="test1111";
         try {
            boolean exists= this.client.workflowExists(workflowName);
             Assert.assertEquals(exists,true);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void testWorkflowStatus() throws Exception {
+        String workflowName="logdemo1";
+        WorkflowStatus status=this.client.workflowStatus(workflowName);
+        System.out.println(status.status);
     }
 }
