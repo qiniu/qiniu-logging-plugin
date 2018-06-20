@@ -33,7 +33,7 @@
 
 ## 实战
 
-[ElasticSearch日志收集案例]()
+[ElasticSearch日志收集案例](https://github.com/jemygraw/qiniu-logging-plugin/wiki/ElasticSearch%E6%97%A5%E5%BF%97%E6%94%B6%E9%9B%86%E6%A1%88%E4%BE%8B)
 
 [Apache Kafka日志收集案例]()
 
