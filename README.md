@@ -20,7 +20,7 @@
 
 ## 下载
 
-目前该项目已发布预览版，可以通过 [这里](http://devtools.qiniu.com/qiniu-logging-plugin-1.0.0-beta.tar.gz) 下载相关jar。
+目前该项目已发布预览版，可以通过 [这里](http://devtools.qiniu.com/qiniu-logging-plugin-1.0.1-beta.tar.gz) 下载相关jar。
 相关 log4j 1.x 和 log4j 2.x 的配置可以参考：[模版文件](https://github.com/jemygraw/qiniu-logging-plugin/tree/master/src/test/resources)。
 
 ## 应用
