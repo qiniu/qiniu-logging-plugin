@@ -24,3 +24,7 @@ hs_err_pid*
 src/test/resources/log4j-debug.properties
 src/test/resources/log4j2-debug.properties
 src/test/resources/log4j2-debug.xml
+src/test/resources/log4j.properties
+src/test/resources/log4j.xml
+src/test/resources/log4j2.properties
+src/test/resources/log4j2.xml
