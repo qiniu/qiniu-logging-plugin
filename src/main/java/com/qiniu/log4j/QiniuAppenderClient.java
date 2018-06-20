@@ -67,8 +67,8 @@ public class QiniuAppenderClient implements ValueType, Analyzer, Whence, WFStatu
             createRepoInput.schema = new com.qiniu.target.logdb.RepoSchemaEntry[]{
                     new com.qiniu.target.logdb.RepoSchemaEntry("timestamp", TypeDate),
                     new com.qiniu.target.logdb.RepoSchemaEntry("level", TypeString, KeyWordAnalyzer),
-                    new com.qiniu.target.logdb.RepoSchemaEntry("logger", TypeString, KeyWordAnalyzer),
-                    new com.qiniu.target.logdb.RepoSchemaEntry("marker", TypeString, KeyWordAnalyzer),
+                    new com.qiniu.target.logdb.RepoSchemaEntry("logger", TypeString, StandardAnalyzer),
+                    new com.qiniu.target.logdb.RepoSchemaEntry("marker", TypeString, StandardAnalyzer),
                     new com.qiniu.target.logdb.RepoSchemaEntry("message", TypeString, StandardAnalyzer),
                     new com.qiniu.target.logdb.RepoSchemaEntry("thread_name", TypeString, StandardAnalyzer),
                     new com.qiniu.target.logdb.RepoSchemaEntry("thread_id", TypeLong),
@@ -102,6 +102,7 @@ public class QiniuAppenderClient implements ValueType, Analyzer, Whence, WFStatu
         WorkflowStatus workflowStatus = pipelineClient.workflowStatus(workflowName);
         if (!workflowStatus.status.equals(WORKFLOW_STARTED)) {
             pipelineClient.startWorkflow(workflowName);
+            //@TODO check whether workflow started
         }
     }
 }

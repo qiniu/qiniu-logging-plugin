@@ -6,7 +6,7 @@
 
     <groupId>com.qiniu</groupId>
     <artifactId>qiniu-logging-plugin</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 
 
     <dependencies>
@@ -37,7 +37,7 @@
         <dependency>
             <groupId>com.qiniu</groupId>
             <artifactId>qiniu-pandora-sdk</artifactId>
-            <version>1.2</version>
+            <version>1.2.2</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
