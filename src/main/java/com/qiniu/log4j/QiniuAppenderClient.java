@@ -82,7 +82,7 @@ public class QiniuAppenderClient implements ValueType, Analyzer, Whence, WFStatu
         String exportName = String.format("%s_export_to_%s", pipelineRepo, logdbRepo);
         if (!pipelineClient.exportExists(pipelineRepo, exportName)) {
             CreateExportInput<ExportLogdbSpec> createExportInput = new CreateExportInput<ExportLogdbSpec>();
-            createExportInput.whence = WHENCE_NEWEST;
+            createExportInput.whence = WHENCE_OLDEST;
             createExportInput.type = "logdb";
             Map<String, Object> exportFields = new HashMap<String, Object>();
             exportFields.put("timestamp", "#timestamp");
