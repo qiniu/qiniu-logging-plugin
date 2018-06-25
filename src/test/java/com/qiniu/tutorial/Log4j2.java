@@ -33,14 +33,26 @@ public class Log4j2 {
                 FileInputStream fs = new FileInputStream(new File("xxx"));
             } catch (FileNotFoundException e) {
                 //e.printStackTrace();
-                logger.error("", "", new Throwable("xxx", e));
+                logger.error("", "", new Throwable( e));
             }
             try {
-                TimeUnit.MILLISECONDS.sleep(10);
+                TimeUnit.MILLISECONDS.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
+    }
+
+    @Test
+    public void testException(){
+
+        try {
+            FileInputStream fs = new FileInputStream(new File("xxx"));
+        } catch (FileNotFoundException e) {
+            //e.printStackTrace();
+            System.out.println(e.getMessage());
+            System.out.println(e.getLocalizedMessage());
+        }
     }
 }

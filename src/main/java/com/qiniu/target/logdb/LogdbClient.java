@@ -40,7 +40,7 @@ public class LogdbClient implements ValueType, Analyzer {
 
         String postUrl = String.format("%s/v5/repos/%s", this.logdbHost, repoName);
         String postBody = Json.encode(repoInput);
-        this.client.post(postUrl, postBody.getBytes(Config.UTF_8), new StringMap(), Client.JsonMime);
+        this.client.post(postUrl, postBody.getBytes(Config.UTF_8), new StringMap(), Client.JsonMime).close();
     }
 
     /**
@@ -50,7 +50,7 @@ public class LogdbClient implements ValueType, Analyzer {
         boolean exists = false;
         String getUrl = String.format("%s/v5/repos/%s", this.logdbHost, repoName);
         try {
-            this.client.get(getUrl, new StringMap());
+            this.client.get(getUrl, new StringMap()).close();
             exists = true;
         } catch (QiniuException e) {
             //pass

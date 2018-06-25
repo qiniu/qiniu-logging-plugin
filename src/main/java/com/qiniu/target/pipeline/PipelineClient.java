@@ -30,14 +30,14 @@ public class PipelineClient {
     public void createWorkflow(CreateWorkflowInput workflowInput) throws Exception {
         String postUrl = String.format("%s/v2/workflows/%s", this.pipelineHost, workflowInput.workflowName);
         String postBody = Json.encode(workflowInput);
-        this.client.post(postUrl, postBody.getBytes(Config.UTF_8), new StringMap(), Client.JsonMime);
+        this.client.post(postUrl, postBody.getBytes(Config.UTF_8), new StringMap(), Client.JsonMime).close();
     }
 
     public boolean workflowExists(String workflowName) throws Exception {
         boolean exists = false;
         String getUrl = String.format("%s/v2/workflows/%s", this.pipelineHost, workflowName);
         try {
-            this.client.get(getUrl, new StringMap());
+            this.client.get(getUrl, new StringMap()).close();
             exists = true;
         } catch (QiniuException e) {
             //pass
@@ -47,10 +47,10 @@ public class PipelineClient {
 
     /**
      * Check workflow status
-     * */
-    public WorkflowStatus workflowStatus(String workflowName) throws Exception{
-        String getUrl=String.format("%s/v2/workflows/%s/status",this.pipelineHost,workflowName);
-        Response response=this.client.get(getUrl,new StringMap());
+     */
+    public WorkflowStatus workflowStatus(String workflowName) throws Exception {
+        String getUrl = String.format("%s/v2/workflows/%s/status", this.pipelineHost, workflowName);
+        Response response = this.client.get(getUrl, new StringMap());
         return response.jsonToObject(WorkflowStatus.class);
     }
 
@@ -59,7 +59,7 @@ public class PipelineClient {
     * */
     public void startWorkflow(String workflowName) throws Exception {
         String postUrl = String.format("%s/v2/workflows/%s/start", this.pipelineHost, workflowName);
-        this.client.post(postUrl, null, new StringMap(), "");
+        this.client.post(postUrl, null, new StringMap(), "").close();
     }
 
     /**
@@ -68,7 +68,7 @@ public class PipelineClient {
     public void createRepo(String repoName, CreateRepoInput repoInput) throws Exception {
         String postUrl = String.format("%s/v2/repos/%s", this.pipelineHost, repoName);
         String postBody = Json.encode(repoInput);
-        this.client.post(postUrl, postBody.getBytes(Config.UTF_8), new StringMap(), Client.JsonMime);
+        this.client.post(postUrl, postBody.getBytes(Config.UTF_8), new StringMap(), Client.JsonMime).close();
     }
 
     /**
@@ -78,7 +78,7 @@ public class PipelineClient {
         boolean exists = false;
         String getUrl = String.format("%s/v2/repos/%s", this.pipelineHost, repoName);
         try {
-            this.client.get(getUrl, new StringMap());
+            this.client.get(getUrl, new StringMap()).close();
             exists = true;
         } catch (QiniuException e) {
             //pass
@@ -93,7 +93,7 @@ public class PipelineClient {
     public void createExport(String repoName, String exportName, CreateExportInput exportInput) throws Exception {
         String postUrl = String.format("%s/v2/repos/%s/exports/%s", this.pipelineHost, repoName, exportName);
         String postBody = Json.encode(exportInput);
-        this.client.post(postUrl, postBody.getBytes(Config.UTF_8), new StringMap(), Client.JsonMime);
+        this.client.post(postUrl, postBody.getBytes(Config.UTF_8), new StringMap(), Client.JsonMime).close();
     }
 
     /*
@@ -103,7 +103,7 @@ public class PipelineClient {
         boolean exists = false;
         String getUrl = String.format("%s/v2/repos/%s/exports/%s", this.pipelineHost, repoName, exportName);
         try {
-            this.client.get(getUrl, new StringMap());
+            this.client.get(getUrl, new StringMap()).close();
             exists = true;
         } catch (QiniuException e) {
             //pass
