@@ -1,3 +1,5 @@
+.DS_Store
+
 # Compiled class file
 *.class
 
@@ -21,10 +23,6 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
-src/test/resources/log4j-debug.properties
-src/test/resources/log4j2-debug.properties
-src/test/resources/log4j2-debug.xml
-src/test/resources/log4j.properties
-src/test/resources/log4j.xml
-src/test/resources/log4j2.properties
-src/test/resources/log4j2.xml
+
+targets/*
+.idea/*

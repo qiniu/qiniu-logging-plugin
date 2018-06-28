@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+    <appender name="qiniu" class="com.qiniu.appender.LogbackQiniuAppender">
+        <property name="name" value=""/>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="qiniu"/>
+    </root>
+</configuration>
