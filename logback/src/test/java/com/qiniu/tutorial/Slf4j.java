@@ -15,17 +15,17 @@ public class Slf4j {
     @Test
     public void testSlf4j(){
         Logger logger= LoggerFactory.getLogger(Slf4j.class);
-        logger.trace("slf4j trace level");
-        logger.debug("slf4j debug level");
-        logger.info("slf4j info level");
-        logger.warn("slf4j warn level");
-        logger.error("slf4j error level");
+        logger.trace("slf4j trace level 1");
+        logger.debug("slf4j debug level 2");
+        logger.info("slf4j info level 3");
+        logger.warn("slf4j warn level 4");
+        logger.error("slf4j error level 5");
 
         try {
             FileInputStream fs = new FileInputStream(new File("xxx"));
         } catch (FileNotFoundException e) {
             //e.printStackTrace();
-            logger.error("s", "o", new Throwable( e));
+            logger.error("exception", "o", new Throwable( e));
         }
 
         try {

@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<configuration>
+<configuration debug="true">
+
     <appender name="qiniu" class="com.qiniu.appender.LogbackQiniuAppender">
-        <property name="name" value=""/>
+        <workflowName>logdemo1</workflowName>
+        <workflowRegion>nb</workflowRegion>
+        <pipelineRepo>pipe1</pipelineRepo>
+        <logdbRepo>logdb1</logdbRepo>
+        <logdbRetention>30d</logdbRetention>
+        <autoFlushInterval>10</autoFlushInterval>
+        <accessKey>ak</accessKey>
+        <secretKey>sk</secretKey>
     </appender>
 
     <root level="INFO">
