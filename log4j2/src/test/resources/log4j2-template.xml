@@ -2,6 +2,8 @@
 <Configuration status="INFO" xmlns="http://logging.apache.org/log4j/2.0/config">
     <Appenders>
         <Log4j2QiniuAppender name="qiniu"
+                             pipelineHost="https://pipeline.qiniu.com"
+                             logdbHost="https://logdb.qiniu.com"
                              workflowName="logdemo1"
                              workflowRegion="nb"
                              pipelineRepo="logpipe1"

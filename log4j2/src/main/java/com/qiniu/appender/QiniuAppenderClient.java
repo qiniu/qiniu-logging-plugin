@@ -26,11 +26,23 @@ public class QiniuAppenderClient implements ValueType, Analyzer, ExportWhence, W
      * @param logdbRepo      pandora logdb repo name
      * @param logdbRetention pandora logdb retention days
      */
-    public static void createAppenderWorkflow(PandoraClient client, String workflowName, String workflowRegion,
-                                              String pipelineRepo, String logdbRepo, String logdbRetention)
+    public static void createAppenderWorkflow(PandoraClient client, String pipelineHost, String logdbHost,
+                                              String workflowName, String workflowRegion, String pipelineRepo,
+                                              String logdbRepo, String logdbRetention)
             throws Exception {
-        PipelineClient pipelineClient = new PipelineClient(client);
-        LogDBClient logdbClient = new LogDBClient(client);
+        PipelineClient pipelineClient = null;
+        if (pipelineHost != null && !pipelineHost.isEmpty()) {
+            pipelineClient = new PipelineClient(client, pipelineHost);
+        } else {
+            pipelineClient = new PipelineClient(client);
+        }
+
+        LogDBClient logdbClient = null;
+        if (logdbHost != null && !logdbHost.isEmpty()) {
+            logdbClient = new LogDBClient(client, logdbHost);
+        } else {
+            logdbClient = new LogDBClient(client);
+        }
 
         //check workflow
         if (!pipelineClient.workflowExists(workflowName)) {
@@ -61,7 +73,8 @@ public class QiniuAppenderClient implements ValueType, Analyzer, ExportWhence, W
 
         //check logdb
         if (!logdbClient.repoExists(logdbRepo)) {
-            com.qiniu.pandora.logdb.repo.CreateRepoInput createRepoInput = new com.qiniu.pandora.logdb.repo.CreateRepoInput();
+            com.qiniu.pandora.logdb.repo.CreateRepoInput createRepoInput = new
+                    com.qiniu.pandora.logdb.repo.CreateRepoInput();
             createRepoInput.region = workflowRegion;
             createRepoInput.retention = logdbRetention;
             createRepoInput.schema = new com.qiniu.pandora.logdb.repo.RepoSchemaEntry[]{
@@ -95,7 +108,8 @@ public class QiniuAppenderClient implements ValueType, Analyzer, ExportWhence, W
             exportFields.put("thread_id", "#thread_id");
             exportFields.put("thread_priority", "#thread_priority");
             exportFields.put("exception", "#exception");
-            createExportInput.spec = new CreateExportInput.ExportLogDBSpec(logdbRepo, exportFields, true, true);
+            createExportInput.spec = new CreateExportInput.ExportLogDBSpec(logdbRepo, exportFields, true,
+                    true);
             pipelineClient.createExport(pipelineRepo, exportName, createExportInput);
         }
 

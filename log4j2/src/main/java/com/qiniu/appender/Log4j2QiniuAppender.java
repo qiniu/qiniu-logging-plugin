@@ -39,11 +39,16 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
     private DataSender logSender;
 
     private Log4j2QiniuAppender(String name, Filter filter, Layout<? extends Serializable> layout,
-                                boolean ignoreExceptions, String pipelineRepo, PandoraClient client, int autoFlushInterval) {
+                                boolean ignoreExceptions, String pipelineHost, String logdbHost, String pipelineRepo,
+                                PandoraClient client, int autoFlushInterval) {
         super(name, filter, layout, ignoreExceptions);
         this.batch = new Batch();
         this.executorService = Executors.newCachedThreadPool();
-        this.logSender = new DataSender(pipelineRepo, client);
+        if (pipelineHost != null && !pipelineHost.isEmpty()) {
+            this.logSender = new DataSender(pipelineRepo, client, pipelineHost);
+        } else {
+            this.logSender = new DataSender(pipelineRepo, client);
+        }
 
         if (autoFlushInterval <= 0) {
             autoFlushInterval = DefaultAutoFlushInterval;
@@ -162,6 +167,8 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
      */
     @PluginFactory
     public static Log4j2QiniuAppender createAppender(@PluginAttribute("name") String name,
+                                                     @PluginAttribute("pipelineHost") String pipelineHost,
+                                                     @PluginAttribute("logdbHost") String logdbHost,
                                                      @PluginAttribute("workflowName") String workflowName,
                                                      @PluginAttribute("workflowRegion") String workflowRegion,
                                                      @PluginAttribute("pipelineRepo") String pipelineRepo,
@@ -187,13 +194,14 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
 
         //try to create appender workflow
         try {
-            QiniuAppenderClient.createAppenderWorkflow(client, workflowName, workflowRegion,
+            QiniuAppenderClient.createAppenderWorkflow(client, pipelineHost, logdbHost, workflowName, workflowRegion,
                     pipelineRepo, logdbRepo, logdbRetention);
         } catch (Exception e) {
             e.printStackTrace();
             return null;//logging appender initialization failed
         }
 
-        return new Log4j2QiniuAppender(name, filter, layout, ignoreExceptions, pipelineRepo, client, autoFlushInterval);
+        return new Log4j2QiniuAppender(name, filter, layout, ignoreExceptions, pipelineHost, logdbHost, pipelineRepo,
+                client, autoFlushInterval);
     }
 }
