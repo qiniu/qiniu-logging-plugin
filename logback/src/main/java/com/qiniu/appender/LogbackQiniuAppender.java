@@ -2,6 +2,7 @@ package com.qiniu.appender;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import com.qiniu.pandora.common.Constants;
 import com.qiniu.pandora.common.PandoraClientImpl;
 import com.qiniu.pandora.common.QiniuException;
 import com.qiniu.pandora.http.Response;
@@ -10,7 +11,7 @@ import com.qiniu.pandora.pipeline.points.Point;
 import com.qiniu.pandora.pipeline.sender.DataSender;
 import com.qiniu.pandora.util.Auth;
 
-import java.io.UnsupportedEncodingException;
+import java.io.FileNotFoundException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +30,7 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
     private ExecutorService executorService;
     private DataSender logSender;
     private PandoraClientImpl client;
+    private QiniuLoggingGuard guard;
 
     /*
     * define logback appender properties
@@ -43,6 +45,12 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
     private String accessKey;
     private String secretKey;
     private int autoFlushInterval;
+
+
+    // error handling
+    private String logCacheDir;
+    private int logRotateInterval; //in seconds
+    private int logRetryInterval; //in seconds
 
     public String getPipelineHost() {
         return pipelineHost;
@@ -124,6 +132,30 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
         this.autoFlushInterval = autoFlushInterval;
     }
 
+    public String getLogCacheDir() {
+        return logCacheDir;
+    }
+
+    public void setLogCacheDir(String logCacheDir) {
+        this.logCacheDir = logCacheDir;
+    }
+
+    public int getLogRotateInterval() {
+        return logRotateInterval;
+    }
+
+    public void setLogRotateInterval(int logRotateInterval) {
+        this.logRotateInterval = logRotateInterval;
+    }
+
+    public int getLogRetryInterval() {
+        return logRetryInterval;
+    }
+
+    public void setLogRetryInterval(int logRetryInterval) {
+        this.logRetryInterval = logRetryInterval;
+    }
+
     @Override
     public void start() {
         super.start();
@@ -138,7 +170,22 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
             this.logSender = new DataSender(pipelineRepo, client);
         }
 
-        //create logging workflow
+        //init log guard
+        this.guard = QiniuLoggingGuard.getInstance();
+        if (this.logCacheDir != null && !this.logCacheDir.isEmpty()) {
+            try {
+                this.guard.setLogCacheDir(this.logCacheDir);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        if (this.logRotateInterval > 0) {
+            this.guard.setLogRotateInterval(this.logRotateInterval);
+        }
+        if (this.logRetryInterval > 0) {
+            this.guard.setLogRetryInterval(this.logRetryInterval);
+        }
+        this.guard.setDataSender(this.logSender);
 
         //check attributes
         if (workflowRegion == null || workflowRegion.isEmpty()) {
@@ -181,24 +228,21 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
     public void intervalFlush() {
         this.rwLock.lock();
         final byte[] postBody;
-        try {
-            if (batch.getSize() > 0) {
-                postBody = batch.toString().getBytes("utf-8");
-                this.executorService.execute(new Runnable() {
-                    public void run() {
-                        try {
-                            Response response = logSender.send(postBody);
-                            response.close();
-                        } catch (QiniuException e) {
-                            e.printStackTrace();
-                            //@TODO cache to local?
-                        }
+
+        if (batch.getSize() > 0) {
+            postBody = batch.toString().getBytes(Constants.UTF_8);
+            this.executorService.execute(new Runnable() {
+                public void run() {
+                    try {
+                        Response response = logSender.send(postBody);
+                        response.close();
+                    } catch (QiniuException e) {
+                        //e.printStackTrace();
+                        guard.write(postBody);
                     }
-                });
-                batch.clear();
-            }
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+                }
+            });
+            batch.clear();
         }
 
         this.rwLock.unlock();
@@ -233,22 +277,19 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
         //lock
         this.rwLock.lock();
         if (!batch.canAdd(point)) {
-            try {
-                final byte[] postBody = batch.toString().getBytes("utf-8");
-                this.executorService.execute(new Runnable() {
-                    public void run() {
-                        try {
-                            Response response = logSender.send(postBody);
-                            response.close();
-                        } catch (QiniuException e) {
-                            e.printStackTrace();
-                            //@TODO cache to local?
-                        }
+
+            final byte[] postBody = batch.toString().getBytes(Constants.UTF_8);
+            this.executorService.execute(new Runnable() {
+                public void run() {
+                    try {
+                        Response response = logSender.send(postBody);
+                        response.close();
+                    } catch (QiniuException e) {
+                        //e.printStackTrace();
+                        guard.write(postBody);
                     }
-                });
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
+                }
+            });
 
             batch.clear();
         }

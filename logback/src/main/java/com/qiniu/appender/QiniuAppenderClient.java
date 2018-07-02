@@ -7,7 +7,6 @@ import com.qiniu.pandora.logdb.repo.Analyzer;
 import com.qiniu.pandora.pipeline.PipelineClient;
 import com.qiniu.pandora.pipeline.repo.*;
 
-
 import java.util.HashMap;
 import java.util.Map;
 

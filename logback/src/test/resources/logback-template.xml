@@ -12,6 +12,9 @@
         <autoFlushInterval>10</autoFlushInterval>
         <accessKey>ak</accessKey>
         <secretKey>sk</secretKey>
+        <logCacheDir>/tmp</logCacheDir>
+        <logRotateInterval>60</logRotateInterval>
+        <logRetryInterval>60</logRetryInterval>
     </appender>
 
     <root level="INFO">
