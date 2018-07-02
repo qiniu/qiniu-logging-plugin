@@ -1,5 +1,6 @@
 package com.qiniu.appender;
 
+import com.qiniu.pandora.common.Constants;
 import com.qiniu.pandora.common.PandoraClient;
 import com.qiniu.pandora.common.PandoraClientImpl;
 import com.qiniu.pandora.common.QiniuException;
@@ -17,8 +18,8 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 
+import java.io.FileNotFoundException;
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -37,10 +38,12 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
     private Batch batch;
     private ExecutorService executorService;
     private DataSender logSender;
+    private QiniuLoggingGuard guard;
 
     private Log4j2QiniuAppender(String name, Filter filter, Layout<? extends Serializable> layout,
                                 boolean ignoreExceptions, String pipelineHost, String logdbHost, String pipelineRepo,
-                                PandoraClient client, int autoFlushInterval) {
+                                PandoraClient client, int autoFlushInterval, String logCacheDir, int logRotateInterval,
+                                int logRetryInterval) {
         super(name, filter, layout, ignoreExceptions);
         this.batch = new Batch();
         this.executorService = Executors.newCachedThreadPool();
@@ -53,6 +56,25 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
         if (autoFlushInterval <= 0) {
             autoFlushInterval = DefaultAutoFlushInterval;
         }
+
+        //init log guard
+        this.guard = QiniuLoggingGuard.getInstance();
+        if (logCacheDir != null && !logCacheDir.isEmpty()) {
+            try {
+                this.guard.setLogCacheDir(logCacheDir);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        if (logRotateInterval > 0) {
+            this.guard.setLogRotateInterval(logRotateInterval);
+        }
+        if (logRetryInterval > 0) {
+            this.guard.setLogRetryInterval(logRetryInterval);
+        }
+        this.guard.setDataSender(this.logSender);
+
+
         this.rwLock = new ReentrantLock(true);
         final int autoFlushSeconds = autoFlushInterval;
         new Thread(new Runnable() {
@@ -72,24 +94,21 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
     public void intervalFlush() {
         this.rwLock.lock();
         final byte[] postBody;
-        try {
-            if (batch.getSize() > 0) {
-                postBody = batch.toString().getBytes("utf-8");
-                this.executorService.execute(new Runnable() {
-                    public void run() {
-                        try {
-                            Response response = logSender.send(postBody);
-                            response.close();
-                        } catch (QiniuException e) {
-                            e.printStackTrace();
-                            //@TODO cache to local?
-                        }
+
+        if (batch.getSize() > 0) {
+            postBody = batch.toString().getBytes(Constants.UTF_8);
+            this.executorService.execute(new Runnable() {
+                public void run() {
+                    try {
+                        Response response = logSender.send(postBody);
+                        response.close();
+                    } catch (QiniuException e) {
+                        //e.printStackTrace();
+                        guard.write(postBody);
                     }
-                });
-                batch.clear();
-            }
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+                }
+            });
+            batch.clear();
         }
 
         this.rwLock.unlock();
@@ -128,23 +147,18 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
         //lock
         this.rwLock.lock();
         if (!batch.canAdd(point)) {
-            try {
-                final byte[] postBody = batch.toString().getBytes("utf-8");
-                this.executorService.execute(new Runnable() {
-                    public void run() {
-                        try {
-                            Response response = logSender.send(postBody);
-                            response.close();
-                        } catch (QiniuException e) {
-                            e.printStackTrace();
-                            //@TODO cache to local?
-                        }
+            final byte[] postBody = batch.toString().getBytes(Constants.UTF_8);
+            this.executorService.execute(new Runnable() {
+                public void run() {
+                    try {
+                        Response response = logSender.send(postBody);
+                        response.close();
+                    } catch (QiniuException e) {
+                        //e.printStackTrace();
+                        guard.write(postBody);
                     }
-                });
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-
+                }
+            });
             batch.clear();
         }
         batch.add(point);
@@ -177,6 +191,9 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
                                                      @PluginAttribute("accessKey") String accessKey,
                                                      @PluginAttribute("secretKey") String secretKey,
                                                      @PluginAttribute("autoFlushInterval") int autoFlushInterval,
+                                                     @PluginAttribute("logCacheDir") String logCacheDir,
+                                                     @PluginAttribute("logRotateInterval") int logRotateInterval,
+                                                     @PluginAttribute("logRetryInterval") int logRetryInterval,
                                                      @PluginElement("filter") final Filter filter,
                                                      @PluginElement("layout") Layout<? extends Serializable> layout,
                                                      @PluginAttribute("ignoreExceptions") boolean ignoreExceptions) {
@@ -202,6 +219,6 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
         }
 
         return new Log4j2QiniuAppender(name, filter, layout, ignoreExceptions, pipelineHost, logdbHost, pipelineRepo,
-                client, autoFlushInterval);
+                client, autoFlushInterval, logCacheDir, logRotateInterval, logRetryInterval);
     }
 }
