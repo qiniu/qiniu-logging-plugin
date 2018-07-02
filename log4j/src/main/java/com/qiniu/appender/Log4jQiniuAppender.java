@@ -163,6 +163,16 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
      */
     @Override
     public void activateOptions() {
+        this.batch = new Batch();
+        this.executorService = Executors.newCachedThreadPool();
+        Auth auth = Auth.create(this.accessKey, this.secretKey);
+        this.client = new PandoraClientImpl(auth);
+        if (this.pipelineHost != null && !this.pipelineHost.isEmpty()) {
+            this.logSender = new DataSender(this.pipelineRepo, this.client, this.pipelineHost);
+        } else {
+            this.logSender = new DataSender(this.pipelineRepo, this.client);
+        }
+
         //init log guard
         this.guard = QiniuLoggingGuard.getInstance();
         if (this.logCacheDir != null && !this.logCacheDir.isEmpty()) {
@@ -174,17 +184,7 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
         if (this.logRetryInterval > 0) {
             this.guard.setLogRetryInterval(this.logRetryInterval);
         }
-
-        this.batch = new Batch();
-        this.executorService = Executors.newCachedThreadPool();
-        Auth auth = Auth.create(this.accessKey, this.secretKey);
-        this.client = new PandoraClientImpl(auth);
-        if (this.pipelineHost != null && !this.pipelineHost.isEmpty()) {
-            this.logSender = new DataSender(this.pipelineRepo, this.client, this.pipelineHost);
-        } else {
-            this.logSender = new DataSender(this.pipelineRepo, this.client);
-        }
-        //create logging workflow
+        this.guard.setDataSender(this.logSender);
 
         //check attributes
         if (workflowRegion == null || workflowRegion.isEmpty()) {
