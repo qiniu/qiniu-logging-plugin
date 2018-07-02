@@ -35,6 +35,8 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
     /**
      * define log4j appender params
      */
+    private String pipelineHost;
+    private String logdbHost;
     private String workflowName;
     private String workflowRegion;
     private String pipelineRepo;
@@ -44,6 +46,22 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
     private String secretKey;
     private int autoFlushInterval;
     private PandoraClient client;
+
+    public String getPipelineHost() {
+        return pipelineHost;
+    }
+
+    public void setPipelineHost(String pipelineHost) {
+        this.pipelineHost = pipelineHost;
+    }
+
+    public String getLogdbHost() {
+        return logdbHost;
+    }
+
+    public void setLogdbHost(String logdbHost) {
+        this.logdbHost = logdbHost;
+    }
 
     public String getWorkflowName() {
         return workflowName;
@@ -118,7 +136,11 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
         this.executorService = Executors.newCachedThreadPool();
         Auth auth = Auth.create(this.accessKey, this.secretKey);
         this.client = new PandoraClientImpl(auth);
-        this.logSender = new DataSender(this.pipelineRepo, this.client);
+        if (this.pipelineHost != null && !this.pipelineHost.isEmpty()) {
+            this.logSender = new DataSender(this.pipelineRepo, this.client, this.pipelineHost);
+        } else {
+            this.logSender = new DataSender(this.pipelineRepo, this.client);
+        }
         //create logging workflow
 
         //check attributes
@@ -131,7 +153,7 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
 
         //try to create appender workflow
         try {
-            QiniuAppenderClient.createAppenderWorkflow(client, workflowName, workflowRegion,
+            QiniuAppenderClient.createAppenderWorkflow(client, pipelineHost, logdbHost, workflowName, workflowRegion,
                     pipelineRepo, logdbRepo, logdbRetention);
         } catch (Exception e) {
             e.printStackTrace();
@@ -194,9 +216,7 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
         point.append("timestamp", logEvent.getTimeStamp());
         point.append("level", logEvent.getLevel().toString());
         point.append("logger", logEvent.getLoggerName());
-
         point.append("marker", "");//log4j 1.x doest not support marker
-
         point.append("message", logEvent.getMessage().toString());
         point.append("thread_name", logEvent.getThreadName());
         point.append("thread_id", 0); // log4j 1.x doest not support thread id
