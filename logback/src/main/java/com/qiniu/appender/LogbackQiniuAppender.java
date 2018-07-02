@@ -33,6 +33,8 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
     /*
     * define logback appender properties
     * */
+    private String pipelineHost;
+    private String logdbHost;
     private String workflowName;
     private String workflowRegion;
     private String pipelineRepo;
@@ -42,6 +44,21 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
     private String secretKey;
     private int autoFlushInterval;
 
+    public String getPipelineHost() {
+        return pipelineHost;
+    }
+
+    public void setPipelineHost(String pipelineHost) {
+        this.pipelineHost = pipelineHost;
+    }
+
+    public String getLogdbHost() {
+        return logdbHost;
+    }
+
+    public void setLogdbHost(String logdbHost) {
+        this.logdbHost = logdbHost;
+    }
 
     public String getWorkflowName() {
         return workflowName;
@@ -114,7 +131,13 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
         this.executorService = Executors.newCachedThreadPool();
         Auth auth = Auth.create(this.accessKey, this.secretKey);
         this.client = new PandoraClientImpl(auth);
-        this.logSender = new DataSender(this.pipelineRepo, this.client);
+
+        if (pipelineHost != null && !pipelineHost.isEmpty()) {
+            this.logSender = new DataSender(pipelineRepo, client, pipelineHost);
+        } else {
+            this.logSender = new DataSender(pipelineRepo, client);
+        }
+
         //create logging workflow
 
         //check attributes
@@ -127,7 +150,7 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
 
         //try to create appender workflow
         try {
-            QiniuAppenderClient.createAppenderWorkflow(client, workflowName, workflowRegion,
+            QiniuAppenderClient.createAppenderWorkflow(client, pipelineHost, logdbHost, workflowName, workflowRegion,
                     pipelineRepo, logdbRepo, logdbRetention);
         } catch (Exception e) {
             e.printStackTrace();
