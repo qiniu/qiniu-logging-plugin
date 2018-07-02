@@ -280,22 +280,18 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
         //lock
         this.rwLock.lock();
         if (!batch.canAdd(point)) {
-            try {
-                final byte[] postBody = batch.toString().getBytes("utf-8");
-                this.executorService.execute(new Runnable() {
-                    public void run() {
-                        try {
-                            Response response = logSender.send(postBody);
-                            response.close();
-                        } catch (QiniuException e) {
-                            //e.printStackTrace();
-                            guard.write(postBody);
-                        }
+            final byte[] postBody = batch.toString().getBytes(Constants.UTF_8);
+            this.executorService.execute(new Runnable() {
+                public void run() {
+                    try {
+                        Response response = logSender.send(postBody);
+                        response.close();
+                    } catch (QiniuException e) {
+                        //e.printStackTrace();
+                        guard.write(postBody);
                     }
-                });
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
+                }
+            });
 
             batch.clear();
         }
