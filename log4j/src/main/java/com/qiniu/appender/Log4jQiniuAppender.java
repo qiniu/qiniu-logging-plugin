@@ -1,5 +1,6 @@
 package com.qiniu.appender;
 
+import com.qiniu.pandora.common.Constants;
 import com.qiniu.pandora.common.PandoraClient;
 import com.qiniu.pandora.common.PandoraClientImpl;
 import com.qiniu.pandora.common.QiniuException;
@@ -11,6 +12,7 @@ import com.qiniu.pandora.util.Auth;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 
+import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -176,7 +178,11 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
         //init log guard
         this.guard = QiniuLoggingGuard.getInstance();
         if (this.logCacheDir != null && !this.logCacheDir.isEmpty()) {
-            this.guard.setLogCacheDir(this.logCacheDir);
+            try {
+                this.guard.setLogCacheDir(this.logCacheDir);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
         }
         if (this.logRotateInterval > 0) {
             this.guard.setLogRotateInterval(this.logRotateInterval);
@@ -225,25 +231,22 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
     public void intervalFlush() {
         this.rwLock.lock();
         final byte[] postBody;
-        try {
-            if (batch.getSize() > 0) {
-                postBody = batch.toString().getBytes("utf-8");
-                this.executorService.execute(new Runnable() {
-                    public void run() {
-                        try {
-                            Response response = logSender.send(postBody);
-                            response.close();
-                        } catch (QiniuException e) {
-                            //write to guard
-                            //e.printStackTrace();
-                            guard.write(postBody);
-                        }
+
+        if (batch.getSize() > 0) {
+            postBody = batch.toString().getBytes(Constants.UTF_8);
+            this.executorService.execute(new Runnable() {
+                public void run() {
+                    try {
+                        Response response = logSender.send(postBody);
+                        response.close();
+                    } catch (QiniuException e) {
+                        //write to guard
+                        //e.printStackTrace();
+                        guard.write(postBody);
                     }
-                });
-                batch.clear();
-            }
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+                }
+            });
+            batch.clear();
         }
 
         this.rwLock.unlock();
