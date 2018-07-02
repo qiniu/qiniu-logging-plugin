@@ -11,6 +11,9 @@
         <param name="accessKey" value="ak"/>
         <param name="secretKey" value="sk"/>
         <param name="autoFlushInterval" value="5"/>
+        <param name="logCacheDir" value="/tmp"/>
+        <param name="logRotateInterval" value="60"/>
+        <param name="logRetryInterval" value="60"/>
     </appender>
 
     <root>

@@ -31,6 +31,7 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
     private Batch batch;
     private ExecutorService executorService;
     private DataSender logSender;
+    private QiniuLoggingGuard guard;
 
     /**
      * define log4j appender params
@@ -45,6 +46,12 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
     private String accessKey;
     private String secretKey;
     private int autoFlushInterval;
+
+    // error handling
+    private String logCacheDir;
+    private int logRotateInterval; //in seconds
+    private int logRetryInterval; //in seconds
+
     private PandoraClient client;
 
     public String getPipelineHost() {
@@ -127,11 +134,47 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
         this.autoFlushInterval = autoFlushInterval;
     }
 
+    public String getLogCacheDir() {
+        return logCacheDir;
+    }
+
+    public void setLogCacheDir(String logCacheDir) {
+        this.logCacheDir = logCacheDir;
+    }
+
+    public int getLogRotateInterval() {
+        return logRotateInterval;
+    }
+
+    public void setLogRotateInterval(int logRotateInterval) {
+        this.logRotateInterval = logRotateInterval;
+    }
+
+    public int getLogRetryInterval() {
+        return logRetryInterval;
+    }
+
+    public void setLogRetryInterval(int logRetryInterval) {
+        this.logRetryInterval = logRetryInterval;
+    }
+
     /**
      * Create the logging workflow
      */
     @Override
     public void activateOptions() {
+        //init log guard
+        this.guard = QiniuLoggingGuard.getInstance();
+        if (this.logCacheDir != null && !this.logCacheDir.isEmpty()) {
+            this.guard.setLogCacheDir(this.logCacheDir);
+        }
+        if (this.logRotateInterval > 0) {
+            this.guard.setLogRotateInterval(this.logRotateInterval);
+        }
+        if (this.logRetryInterval > 0) {
+            this.guard.setLogRetryInterval(this.logRetryInterval);
+        }
+
         this.batch = new Batch();
         this.executorService = Executors.newCachedThreadPool();
         Auth auth = Auth.create(this.accessKey, this.secretKey);
@@ -177,7 +220,6 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
                 }
             }
         }).start();
-
     }
 
     public void intervalFlush() {
@@ -192,8 +234,9 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
                             Response response = logSender.send(postBody);
                             response.close();
                         } catch (QiniuException e) {
-                            e.printStackTrace();
-                            //@TODO cache to local?
+                            //write to guard
+                            //e.printStackTrace();
+                            guard.write(postBody);
                         }
                     }
                 });
@@ -242,8 +285,8 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
                             Response response = logSender.send(postBody);
                             response.close();
                         } catch (QiniuException e) {
-                            e.printStackTrace();
-                            //@TODO cache to local?
+                            //e.printStackTrace();
+                            guard.write(postBody);
                         }
                     }
                 });
@@ -258,7 +301,7 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
     }
 
     public void close() {
-
+        this.guard.close();
     }
 
     public boolean requiresLayout() {
