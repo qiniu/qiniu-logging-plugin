@@ -11,6 +11,9 @@
                              accessKey="ak"
                              secretKey="sk"
                              autoFlushInterval="5"
+                             logCacheDir="/tmp/logging"
+                             logRetryInterval="60"
+                             logRotateInterval="60"
         >
         </Log4j2QiniuAppender>
     </Appenders>
