@@ -21,7 +21,9 @@
 
 ## 下载
 
-可以通过 Maven 进行相关 Jar 的下载。
+直接从[这里](http://devtools.qiniu.com/qiniu-logging-plugin-1.0.0.zip)下载。
+
+或者可以通过 Maven 进行相关 Jar 的下载。
 
 ### log4j
 
@@ -52,6 +54,8 @@
     <version>1.0.0</version>
 </dependency>
 ```
+
+**备注** 每种日志框架请只使用对应的jar，一起使用可能会引起冲突，比如log4j和logback在使用slf4j的情况会冲突。
 
 ## 应用
 
