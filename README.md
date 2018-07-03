@@ -66,6 +66,8 @@
 2. [log4j2 配置模版](log4j2/src/test/resources/)
 3. [logback 配置模版](logback/src/test/resources/)
 
+配置模版中各个参数的详细说明，请参考 [配置参数详解](docs/3.配置参数详解.md)
+
 ## 实战
 
 [ElasticSearch日志收集案例](https://github.com/jemygraw/qiniu-logging-plugin/wiki/ElasticSearch%E6%97%A5%E5%BF%97%E6%94%B6%E9%9B%86%E6%A1%88%E4%BE%8B)
