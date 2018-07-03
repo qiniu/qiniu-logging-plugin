@@ -25,16 +25,31 @@
 ### log4j
 
 ```
+<dependency>
+    <groupId>com.qiniu</groupId>
+    <artifactId>qiniu-logging-plugin-log4j</artifactId>
+    <version>1.0.0</version>
+</dependency>
 ```
 
 ### log4j2
 
 ```
+<dependency>
+    <groupId>com.qiniu</groupId>
+    <artifactId>qiniu-logging-plugin-log4j2</artifactId>
+    <version>1.0.0</version>
+</dependency>
 ```
 
 ### logback
 
 ```
+<dependency>
+    <groupId>com.qiniu</groupId>
+    <artifactId>qiniu-logging-plugin-logback</artifactId>
+    <version>1.0.0</version>
+</dependency>
 ```
 
 ## 应用
@@ -44,6 +59,12 @@
 1. 下载相关的jar并放入应用的 CLASSPATH 中；
 2. 修改对应的 log4j 的配置文件，加入七牛 Appender 的相关配置；
 3. 重启应用程序的进程。
+
+相关配置模版可以参考如下文档：
+
+1. [log4j 配置模版](log4j/src/test/resources/)
+2. [log4j2 配置模版](log4j2/src/test/resources/)
+3. [logback 配置模版](logback/src/test/resources/)
 
 ## 实战
 
