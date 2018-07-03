@@ -116,7 +116,6 @@ public class QiniuAppenderClient implements ValueType, Analyzer, ExportWhence, W
         GetWorkflowStatus workflowStatus = pipelineClient.getWorkflowStatus(workflowName);
         if (!workflowStatus.status.equals(WorkflowStarted)) {
             pipelineClient.startWorkflow(workflowName);
-            //@TODO check whether workflow started
         }
     }
 }
