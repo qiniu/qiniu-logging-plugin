@@ -16,12 +16,26 @@
 
 后续即可基于七牛云大数据日志平台做相关的日志分析等工作，整个流程非常简单，清晰，方便。
 
-目前该项目方案已经可以支持 log4j 1.x 和 log4j 2.x 版本。
+目前该项目方案已经可以支持 log4j 1.x，log4j 2.x 以及 logback。
 
 ## 下载
 
-目前该项目已发布预览版，可以通过 [这里](http://devtools.qiniu.com/qiniu-logging-plugin-1.0.1-beta.tar.gz) 下载相关jar。
-相关 log4j 1.x 和 log4j 2.x 的配置可以参考：[模版文件](https://github.com/jemygraw/qiniu-logging-plugin/tree/master/src/test/resources)。
+可以通过 Maven 进行相关 Jar 的下载。
+
+### log4j
+
+```
+```
+
+### log4j2
+
+```
+```
+
+### logback
+
+```
+```
 
 ## 应用
 
