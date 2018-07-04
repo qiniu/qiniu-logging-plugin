@@ -132,9 +132,9 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
             Throwable t = logEvent.getThrown().getCause();
             if (t != null) {
                 StringBuilder exceptionBuilder = new StringBuilder();
-                exceptionBuilder.append(t.getMessage());
+                exceptionBuilder.append(t.getMessage()).append("\n");
                 for (StackTraceElement element : logEvent.getThrown().getStackTrace()) {
-                    exceptionBuilder.append(element.toString());
+                    exceptionBuilder.append(element.toString()).append("\n");
                 }
                 point.append("exception", exceptionBuilder.toString());
             } else {

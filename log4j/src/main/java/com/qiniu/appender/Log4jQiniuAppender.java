@@ -270,7 +270,7 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
         if (logEvent.getThrowableStrRep() != null) {
             StringBuilder exceptionBuilder = new StringBuilder();
             for (String msg : logEvent.getThrowableStrRep()) {
-                exceptionBuilder.append(msg);
+                exceptionBuilder.append(msg).append("\n");
             }
             point.append("exception", exceptionBuilder.toString());
         } else {

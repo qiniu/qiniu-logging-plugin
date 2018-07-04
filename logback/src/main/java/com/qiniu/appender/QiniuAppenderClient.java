@@ -67,6 +67,9 @@ public class QiniuAppenderClient implements ValueType, Analyzer, ExportWhence, W
                     new RepoSchemaEntry("thread_priority", TypeLong, true),
                     new RepoSchemaEntry("exception", TypeString, true),
             };
+            CreateRepoInput.RepoOptions options = new CreateRepoInput.RepoOptions();
+            options.unescapeLine = true;
+            createRepoInput.options = options;
             pipelineClient.createRepo(pipelineRepo, createRepoInput);
         }
 
