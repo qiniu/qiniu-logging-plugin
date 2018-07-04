@@ -1,6 +1,7 @@
 package com.qiniu.appender;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.core.AppenderBase;
 import com.qiniu.pandora.common.Constants;
 import com.qiniu.pandora.common.PandoraClientImpl;
@@ -262,12 +263,13 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
 
         point.append("message", logEvent.getMessage());
         point.append("thread_name", logEvent.getThreadName());
-        point.append("thread_id", 0); // log4j 1.x doest not support thread id
+        point.append("thread_id", 0); // logback doest not support thread id
         point.append("thread_priority", 0);
-        if (logEvent.getCallerData() != null) {
+        if (logEvent.getThrowableProxy() != null) {
             StringBuilder exceptionBuilder = new StringBuilder();
-            for (StackTraceElement msg : logEvent.getCallerData()) {
-                exceptionBuilder.append(msg.toString());
+            exceptionBuilder.append(logEvent.getThrowableProxy().getMessage()).append("\n");
+            for (StackTraceElementProxy proxy : logEvent.getThrowableProxy().getStackTraceElementProxyArray()) {
+                exceptionBuilder.append(proxy.getStackTraceElement().toString()).append("\n");
             }
             point.append("exception", exceptionBuilder.toString());
         } else {
