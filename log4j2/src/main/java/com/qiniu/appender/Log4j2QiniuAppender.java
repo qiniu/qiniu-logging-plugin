@@ -32,9 +32,11 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
     private Lock rwLock;
     private Batch batch;
+    private BlockingQueue<Runnable> queue;
     private ExecutorService executorService;
     private DataSender logPushSender;
     private QiniuLoggingGuard guard;
+
 
     private Log4j2QiniuAppender(String name, Filter filter, Layout<? extends Serializable> layout,
                                 boolean ignoreExceptions, Auth auth, String pipelineHost, String pipelineRepo,
@@ -73,9 +75,9 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
         }
 
         this.batch = new Batch();
+        this.queue = new ArrayBlockingQueue<>(51);
         this.executorService = new ThreadPoolExecutor(0, logPushThreadPoolSize,
-                60L, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>());
+                60L, TimeUnit.SECONDS, this.queue);
 
         //init log push
         Configuration pushCfg = new Configuration();
@@ -139,30 +141,32 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
 
     public void intervalFlush() {
         this.rwLock.lock();
-        final byte[] postBody;
+        try {
+            final byte[] postBody;
 
-        if (batch.getSize() > 0) {
-            postBody = batch.toString().getBytes(Constants.UTF_8);
-            try {
-                this.executorService.execute(new Runnable() {
-                    public void run() {
-                        try {
-                            Response response = logPushSender.send(postBody);
-                            response.close();
-                        } catch (QiniuException e) {
-                            //e.printStackTrace();
-                            guard.write(postBody);
+            if (batch.getSize() > 0) {
+                postBody = batch.toString().getBytes(Constants.UTF_8);
+                try {
+                    this.executorService.execute(new Runnable() {
+                        public void run() {
+                            try {
+                                Response response = logPushSender.send(postBody);
+                                response.close();
+                            } catch (QiniuException e) {
+                                //e.printStackTrace();
+                                guard.write(postBody);
+                            }
                         }
-                    }
-                });
-            } catch (RejectedExecutionException ex) {
-                guard.write(postBody);
+                    });
+                } catch (RejectedExecutionException ex) {
+                    guard.write(postBody);
+                }
+
+                batch.clear();
             }
-
-            batch.clear();
+        }finally {
+            this.rwLock.unlock();
         }
-
-        this.rwLock.unlock();
     }
 
     public void append(LogEvent logEvent) {
@@ -197,28 +201,35 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
 
         //lock
         this.rwLock.lock();
-        if (!batch.canAdd(point)) {
-            final byte[] postBody = batch.toString().getBytes(Constants.UTF_8);
-            try {
-                this.executorService.execute(new Runnable() {
-                    public void run() {
-                        try {
-                            Response response = logPushSender.send(postBody);
-                            response.close();
-                        } catch (QiniuException e) {
-                            //e.printStackTrace();
-                            guard.write(postBody);
-                        }
+        try {
+            if (!batch.canAdd(point)) {
+                final byte[] postBody = batch.toString().getBytes(Constants.UTF_8);
+                if (this.queue.size() < 50) {
+                    try {
+                        this.executorService.execute(new Runnable() {
+                            public void run() {
+                                try {
+                                    Response response = logPushSender.send(postBody);
+                                    response.close();
+                                } catch (QiniuException e) {
+                                    //e.printStackTrace();
+                                    guard.write(postBody);
+                                }
+                            }
+                        });
+                    } catch (RejectedExecutionException ex) {
+                        guard.write(postBody);
                     }
-                });
-            } catch (RejectedExecutionException ex) {
-                guard.write(postBody);
-            }
+                } else {
+                    guard.write(postBody);
+                }
 
-            batch.clear();
+                batch.clear();
+            }
+            batch.add(point);
+        } finally {
+            this.rwLock.unlock();
         }
-        batch.add(point);
-        this.rwLock.unlock();
     }
 
     /**

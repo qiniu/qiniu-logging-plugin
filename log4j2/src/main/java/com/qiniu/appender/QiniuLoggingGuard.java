@@ -22,6 +22,7 @@ public class QiniuLoggingGuard {
     private int logRetryInterval; // in seconds
 
     private Map<String, Boolean> retryingFiles;
+    private BlockingQueue<Runnable> queue;
     private ExecutorService retryService;
     private int currentLogCounter;
     private String currentLogFileName;
@@ -88,6 +89,9 @@ public class QiniuLoggingGuard {
                 File[] readyLogFiles = logCacheDirFile.listFiles(this.logFileFilter);
                 if (readyLogFiles != null) {
                     for (final File logFile : readyLogFiles) {
+                        if (this.queue.size() >= 1000) {
+                            break; // or  continue;
+                        }
                         if (logFile.getName().endsWith(".log")) {
                             final String logFileAbsPath = logFile.getAbsolutePath();
                             //check whether the last upload finishes
@@ -143,7 +147,9 @@ public class QiniuLoggingGuard {
             synchronized (QiniuLoggingGuard.class) {
                 if (instance == null) {
                     instance = new QiniuLoggingGuard();
-                    instance.retryService = Executors.newFixedThreadPool(logRetryThreadPoolSize);
+                    instance.queue = new ArrayBlockingQueue<>(1001);
+                    instance.retryService = new ThreadPoolExecutor(0, logRetryThreadPoolSize,
+                            60L, TimeUnit.SECONDS, instance.queue);
                 }
             }
         }
