@@ -143,9 +143,7 @@ public class QiniuLoggingGuard {
             synchronized (QiniuLoggingGuard.class) {
                 if (instance == null) {
                     instance = new QiniuLoggingGuard();
-                    instance.retryService = new ThreadPoolExecutor(0, logRetryThreadPoolSize,
-                            60L, TimeUnit.SECONDS,
-                            new SynchronousQueue<Runnable>());
+                    instance.retryService = Executors.newFixedThreadPool(logRetryThreadPoolSize);
                 }
             }
         }
