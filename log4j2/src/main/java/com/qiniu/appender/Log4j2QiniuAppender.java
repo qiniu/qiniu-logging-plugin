@@ -1,9 +1,7 @@
 package com.qiniu.appender;
 
-import com.qiniu.pandora.common.Constants;
-import com.qiniu.pandora.common.PandoraClient;
-import com.qiniu.pandora.common.PandoraClientImpl;
-import com.qiniu.pandora.common.QiniuException;
+import com.qiniu.pandora.common.*;
+import com.qiniu.pandora.http.Client;
 import com.qiniu.pandora.http.Response;
 import com.qiniu.pandora.pipeline.points.Batch;
 import com.qiniu.pandora.pipeline.points.Point;
@@ -20,9 +18,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 
 import java.io.FileNotFoundException;
 import java.io.Serializable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -37,43 +33,93 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
     private Lock rwLock;
     private Batch batch;
     private ExecutorService executorService;
-    private DataSender logSender;
+    private DataSender logPushSender;
     private QiniuLoggingGuard guard;
 
     private Log4j2QiniuAppender(String name, Filter filter, Layout<? extends Serializable> layout,
-                                boolean ignoreExceptions, String pipelineHost, String logdbHost, String pipelineRepo,
-                                PandoraClient client, int autoFlushInterval, String logCacheDir, int logRotateInterval,
-                                int logRetryInterval) {
+                                boolean ignoreExceptions, Auth auth, String pipelineHost, String pipelineRepo,
+                                int autoFlushInterval, String logCacheDir, int logRotateInterval, int logRetryInterval,
+                                int logPushThreadPoolSize, int logPushConnectTimeout, int logPushReadTimeout,
+                                int logPushWriteTimeout, int logRetryThreadPoolSize, int logRetryConnectTimeout,
+                                int logRetryReadTimeout, int logRetryWriteTimeout) {
         super(name, filter, layout, ignoreExceptions);
-        this.batch = new Batch();
-        this.executorService = Executors.newCachedThreadPool();
-        if (pipelineHost != null && !pipelineHost.isEmpty()) {
-            this.logSender = new DataSender(pipelineRepo, client, pipelineHost);
-        } else {
-            this.logSender = new DataSender(pipelineRepo, client);
+        if (logPushThreadPoolSize <= 0) {
+            logPushThreadPoolSize = Configs.DefaultLogPushThreadPoolSize;
+        }
+        if (logPushConnectTimeout <= 0) {
+            logPushConnectTimeout = Configs.DefaultLogPushConnectTimeout;
+        }
+        if (logPushReadTimeout <= 0) {
+            logPushReadTimeout = Configs.DefaultLogPushReadTimeout;
+        }
+        if (logPushWriteTimeout <= 0) {
+            logPushWriteTimeout = Configs.DefaultLogPushWriteTimeout;
+        }
+        if (logRetryThreadPoolSize <= 0) {
+            logRetryThreadPoolSize = Configs.DefaultLogRetryThreadPoolSize;
+        }
+        if (logRetryConnectTimeout <= 0) {
+            logRetryConnectTimeout = Configs.DefaultLogRetryConnectTimeout;
+        }
+        if (logRetryReadTimeout <= 0) {
+            logRetryReadTimeout = Configs.DefaultLogRetryReadTimeout;
+        }
+        if (logRetryWriteTimeout <= 0) {
+            logRetryWriteTimeout = Configs.DefaultLogRetryWriteTimeout;
         }
 
         if (autoFlushInterval <= 0) {
             autoFlushInterval = DefaultAutoFlushInterval;
         }
 
-        //init log guard
-        this.guard = QiniuLoggingGuard.getInstance();
+        this.batch = new Batch();
+        this.executorService = new ThreadPoolExecutor(0, logPushThreadPoolSize,
+                60L, TimeUnit.SECONDS,
+                new SynchronousQueue<Runnable>());
+
+        //init log push
+        Configuration pushCfg = new Configuration();
+        pushCfg.connectTimeout = logPushConnectTimeout;
+        pushCfg.readTimeout = logPushReadTimeout;
+        pushCfg.writeTimeout = logPushWriteTimeout;
+        Client pushClient = new Client(pushCfg);
+        PandoraClient pushPandoraClient = new PandoraClientImpl(auth, pushClient);
+
+        //init log retry client
+        Configuration retryCfg = new Configuration();
+        retryCfg.connectTimeout = logRetryConnectTimeout;
+        retryCfg.readTimeout = logRetryReadTimeout;
+        retryCfg.writeTimeout = logRetryWriteTimeout;
+        Client retryClient = new Client(retryCfg);
+        PandoraClient retryPandoraClient = new PandoraClientImpl(auth, retryClient);
+
+        //create log push sender & retry sender
+        DataSender logRetrySender = null;
+        if (pipelineHost != null && !pipelineHost.isEmpty()) {
+            logPushSender = new DataSender(pipelineRepo, pushPandoraClient, pipelineHost);
+            logRetrySender = new DataSender(pipelineRepo, retryPandoraClient, pipelineHost);
+        } else {
+            logPushSender = new DataSender(pipelineRepo, pushPandoraClient);
+            logRetrySender = new DataSender(pipelineRepo, retryPandoraClient);
+        }
+
+        //init log retry guard
+        guard = QiniuLoggingGuard.getInstance(logRetryThreadPoolSize);
         if (logCacheDir != null && !logCacheDir.isEmpty()) {
             try {
-                this.guard.setLogCacheDir(logCacheDir);
+                guard.setLogCacheDir(logCacheDir);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
         }
         if (logRotateInterval > 0) {
-            this.guard.setLogRotateInterval(logRotateInterval);
+            guard.setLogRotateInterval(logRotateInterval);
         }
         if (logRetryInterval > 0) {
-            this.guard.setLogRetryInterval(logRetryInterval);
+            guard.setLogRetryInterval(logRetryInterval);
         }
-        this.guard.setDataSender(this.logSender);
 
+        this.guard.setDataSender(logRetrySender);
 
         this.rwLock = new ReentrantLock(true);
         final int autoFlushSeconds = autoFlushInterval;
@@ -100,7 +146,7 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
             this.executorService.execute(new Runnable() {
                 public void run() {
                     try {
-                        Response response = logSender.send(postBody);
+                        Response response = logPushSender.send(postBody);
                         response.close();
                     } catch (QiniuException e) {
                         //e.printStackTrace();
@@ -151,7 +197,7 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
             this.executorService.execute(new Runnable() {
                 public void run() {
                     try {
-                        Response response = logSender.send(postBody);
+                        Response response = logPushSender.send(postBody);
                         response.close();
                     } catch (QiniuException e) {
                         //e.printStackTrace();
@@ -194,6 +240,14 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
                                                      @PluginAttribute("logCacheDir") String logCacheDir,
                                                      @PluginAttribute("logRotateInterval") int logRotateInterval,
                                                      @PluginAttribute("logRetryInterval") int logRetryInterval,
+                                                     @PluginAttribute("logPushThreadPoolSize") int logPushThreadPoolSize,
+                                                     @PluginAttribute("logPushConnectTimeout") int logPushConnectTimeout,
+                                                     @PluginAttribute("logPushReadTimeout") int logPushReadTimeout,
+                                                     @PluginAttribute("logPushWriteTimeout") int logPushWriteTimeout,
+                                                     @PluginAttribute("logRetryThreadPoolSize") int logRetryThreadPoolSize,
+                                                     @PluginAttribute("logRetryConnectTimeout") int logRetryConnectTimeout,
+                                                     @PluginAttribute("logRetryReadTimeout") int logRetryReadTimeout,
+                                                     @PluginAttribute("logRetryWriteTimeout") int logRetryWriteTimeout,
                                                      @PluginElement("filter") final Filter filter,
                                                      @PluginElement("layout") Layout<? extends Serializable> layout,
                                                      @PluginAttribute("ignoreExceptions") boolean ignoreExceptions) {
@@ -218,7 +272,9 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
             return null;//logging appender initialization failed
         }
 
-        return new Log4j2QiniuAppender(name, filter, layout, ignoreExceptions, pipelineHost, logdbHost, pipelineRepo,
-                client, autoFlushInterval, logCacheDir, logRotateInterval, logRetryInterval);
+        return new Log4j2QiniuAppender(name, filter, layout, ignoreExceptions, auth, pipelineHost, pipelineRepo,
+                autoFlushInterval, logCacheDir, logRotateInterval, logRetryInterval, logPushThreadPoolSize,
+                logPushConnectTimeout, logPushReadTimeout, logPushWriteTimeout, logRetryThreadPoolSize,
+                logRetryConnectTimeout, logRetryReadTimeout, logRetryWriteTimeout);
     }
 }

@@ -13,7 +13,15 @@
                              autoFlushInterval="5"
                              logCacheDir="/tmp/logging"
                              logRetryInterval="60"
-                             logRotateInterval="60"
+                             logRotateInterval="600"
+                             logPushThreadPoolSize="20"
+                             logPushConnectTimeout="10"
+                             logPushReadTimeout="30"
+                             logPushWriteTimeout="60"
+                             logRetryThreadPoolSize="10"
+                             logRetryConnectTimeout="10"
+                             logRetryReadTimeout="30"
+                             logRetryWriteTimeout="60"
         >
         </Log4j2QiniuAppender>
     </Appenders>
