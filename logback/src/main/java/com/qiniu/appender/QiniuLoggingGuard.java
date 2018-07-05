@@ -300,8 +300,10 @@ public class QiniuLoggingGuard {
 
     public synchronized void close() {
         try {
-            this.currentLogWriter.flush();
-            this.currentLogWriter.close();
+            if (this.currentLogWriter != null) {
+                this.currentLogWriter.flush();
+                this.currentLogWriter.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
