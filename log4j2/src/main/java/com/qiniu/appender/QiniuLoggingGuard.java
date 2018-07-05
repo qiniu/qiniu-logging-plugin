@@ -6,6 +6,8 @@ import com.qiniu.pandora.pipeline.sender.DataSender;
 import java.io.*;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +24,7 @@ public class QiniuLoggingGuard {
     private int logRotateInterval; // in seconds
     private int logRetryInterval; // in seconds
 
+    private Map<String, Boolean> retryingFiles;
     private ExecutorService retryService;
     private int currentLogCounter;
     private String currentLogFileName;
@@ -41,6 +44,7 @@ public class QiniuLoggingGuard {
 
         this.logRotateIntervalInMillis = this.logRotateInterval * 1000;
         this.logRotateIntervalInMinutes = this.logRotateInterval / 60;
+        this.retryingFiles = new ConcurrentHashMap<String, Boolean>();
         this.retryService = Executors.newCachedThreadPool();
         this.currentFileLength = 0;
         this.currentLogCounter = 0;
@@ -90,6 +94,13 @@ public class QiniuLoggingGuard {
                 if (readyLogFiles != null) {
                     for (final File logFile : readyLogFiles) {
                         if (logFile.getName().endsWith(".log")) {
+                            final String logFileAbsPath = logFile.getAbsolutePath();
+                            //check whether the last upload finishes
+                            if (this.retryingFiles.containsKey(logFileAbsPath)) {
+                                //wait for next scheduled time
+                                continue;
+                            }
+                            this.retryingFiles.put(logFileAbsPath, true);
                             //try to upload the data
                             retryService.execute(new Runnable() {
                                 @Override
@@ -115,6 +126,8 @@ public class QiniuLoggingGuard {
                                             }
                                         }
                                     }
+                                    //whether success or not, delete key
+                                    retryingFiles.remove(logFileAbsPath);
                                 }
                             });
                         }
