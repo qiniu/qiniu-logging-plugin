@@ -148,7 +148,7 @@ public class QiniuLoggingGuard {
                 if (instance == null) {
                     instance = new QiniuLoggingGuard();
                     instance.queue = new ArrayBlockingQueue<>(1001);
-                    instance.retryService = new ThreadPoolExecutor(0, logRetryThreadPoolSize,
+                    instance.retryService = new ThreadPoolExecutor(1, logRetryThreadPoolSize,
                             60L, TimeUnit.SECONDS, instance.queue);
                 }
             }
