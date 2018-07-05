@@ -1,9 +1,7 @@
 package com.qiniu.appender;
 
-import com.qiniu.pandora.common.Constants;
-import com.qiniu.pandora.common.PandoraClient;
-import com.qiniu.pandora.common.PandoraClientImpl;
-import com.qiniu.pandora.common.QiniuException;
+import com.qiniu.pandora.common.*;
+import com.qiniu.pandora.http.Client;
 import com.qiniu.pandora.http.Response;
 import com.qiniu.pandora.pipeline.points.Batch;
 import com.qiniu.pandora.pipeline.points.Point;
@@ -14,9 +12,7 @@ import org.apache.log4j.spi.LoggingEvent;
 
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -32,7 +28,7 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
     private Lock rwLock;
     private Batch batch;
     private ExecutorService executorService;
-    private DataSender logSender;
+    private DataSender logPushSender;
     private QiniuLoggingGuard guard;
 
     /**
@@ -54,7 +50,16 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
     private int logRotateInterval; //in seconds
     private int logRetryInterval; //in seconds
 
-    private PandoraClient client;
+    // performance tuning
+    private int logPushThreadPoolSize;
+    private int logPushConnectTimeout;
+    private int logPushReadTimeout;
+    private int logPushWriteTimeout;
+
+    private int logRetryThreadPoolSize;
+    private int logRetryConnectTimeout;
+    private int logRetryReadTimeout;
+    private int logRetryWriteTimeout;
 
     public String getPipelineHost() {
         return pipelineHost;
@@ -160,23 +165,135 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
         this.logRetryInterval = logRetryInterval;
     }
 
+    public int getLogPushThreadPoolSize() {
+        return logPushThreadPoolSize;
+    }
+
+    public void setLogPushThreadPoolSize(int logPushThreadPoolSize) {
+        this.logPushThreadPoolSize = logPushThreadPoolSize;
+    }
+
+    public int getLogPushConnectTimeout() {
+        return logPushConnectTimeout;
+    }
+
+    public void setLogPushConnectTimeout(int logPushConnectTimeout) {
+        this.logPushConnectTimeout = logPushConnectTimeout;
+    }
+
+    public int getLogPushReadTimeout() {
+        return logPushReadTimeout;
+    }
+
+    public void setLogPushReadTimeout(int logPushReadTimeout) {
+        this.logPushReadTimeout = logPushReadTimeout;
+    }
+
+    public int getLogPushWriteTimeout() {
+        return logPushWriteTimeout;
+    }
+
+    public void setLogPushWriteTimeout(int logPushWriteTimeout) {
+        this.logPushWriteTimeout = logPushWriteTimeout;
+    }
+
+    public int getLogRetryThreadPoolSize() {
+        return logRetryThreadPoolSize;
+    }
+
+    public void setLogRetryThreadPoolSize(int logRetryThreadPoolSize) {
+        this.logRetryThreadPoolSize = logRetryThreadPoolSize;
+    }
+
+    public int getLogRetryConnectTimeout() {
+        return logRetryConnectTimeout;
+    }
+
+    public void setLogRetryConnectTimeout(int logRetryConnectTimeout) {
+        this.logRetryConnectTimeout = logRetryConnectTimeout;
+    }
+
+    public int getLogRetryReadTimeout() {
+        return logRetryReadTimeout;
+    }
+
+    public void setLogRetryReadTimeout(int logRetryReadTimeout) {
+        this.logRetryReadTimeout = logRetryReadTimeout;
+    }
+
+    public int getLogRetryWriteTimeout() {
+        return logRetryWriteTimeout;
+    }
+
+    public void setLogRetryWriteTimeout(int logRetryWriteTimeout) {
+        this.logRetryWriteTimeout = logRetryWriteTimeout;
+    }
+
     /**
      * Create the logging workflow
      */
     @Override
     public void activateOptions() {
-        this.batch = new Batch();
-        this.executorService = Executors.newCachedThreadPool();
-        Auth auth = Auth.create(this.accessKey, this.secretKey);
-        this.client = new PandoraClientImpl(auth);
-        if (this.pipelineHost != null && !this.pipelineHost.isEmpty()) {
-            this.logSender = new DataSender(this.pipelineRepo, this.client, this.pipelineHost);
-        } else {
-            this.logSender = new DataSender(this.pipelineRepo, this.client);
+        if (this.logPushThreadPoolSize <= 0) {
+            this.logPushThreadPoolSize = Configs.DefaultLogPushThreadPoolSize;
+        }
+        if (this.logPushConnectTimeout <= 0) {
+            this.logPushConnectTimeout = Configs.DefaultLogPushConnectTimeout;
+        }
+        if (this.logPushReadTimeout <= 0) {
+            this.logPushReadTimeout = Configs.DefaultLogPushReadTimeout;
+        }
+        if (this.logPushWriteTimeout <= 0) {
+            this.logPushWriteTimeout = Configs.DefaultLogPushWriteTimeout;
+        }
+        if (this.logRetryThreadPoolSize <= 0) {
+            this.logRetryThreadPoolSize = Configs.DefaultLogRetryThreadPoolSize;
+        }
+        if (this.logRetryConnectTimeout <= 0) {
+            this.logRetryConnectTimeout = Configs.DefaultLogRetryConnectTimeout;
+        }
+        if (this.logRetryReadTimeout <= 0) {
+            this.logRetryReadTimeout = Configs.DefaultLogRetryReadTimeout;
+        }
+        if (this.logRetryWriteTimeout <= 0) {
+            this.logRetryWriteTimeout = Configs.DefaultLogRetryWriteTimeout;
         }
 
-        //init log guard
-        this.guard = QiniuLoggingGuard.getInstance();
+        this.batch = new Batch();
+        this.executorService = new ThreadPoolExecutor(0, this.logPushThreadPoolSize,
+                60L, TimeUnit.SECONDS,
+                new SynchronousQueue<Runnable>());
+
+        Auth auth = Auth.create(this.accessKey, this.secretKey);
+
+        //init log push
+        Configuration pushCfg = new Configuration();
+        pushCfg.connectTimeout = this.logPushConnectTimeout;
+        pushCfg.readTimeout = this.logPushReadTimeout;
+        pushCfg.writeTimeout = this.logPushWriteTimeout;
+        Client pushClient = new Client(pushCfg);
+        PandoraClient pushPandoraClient = new PandoraClientImpl(auth, pushClient);
+
+        //init log retry client
+        Configuration retryCfg = new Configuration();
+        retryCfg.connectTimeout = this.logRetryConnectTimeout;
+        retryCfg.readTimeout = this.logRetryReadTimeout;
+        retryCfg.writeTimeout = this.logRetryWriteTimeout;
+        Client retryClient = new Client(retryCfg);
+        PandoraClient retryPandoraClient = new PandoraClientImpl(auth, retryClient);
+
+        //create log push sender & retry sender
+        DataSender logRetrySender = null;
+        if (this.pipelineHost != null && !this.pipelineHost.isEmpty()) {
+            this.logPushSender = new DataSender(this.pipelineRepo, pushPandoraClient, this.pipelineHost);
+            logRetrySender = new DataSender(this.pipelineRepo, retryPandoraClient, this.pipelineHost);
+        } else {
+            this.logPushSender = new DataSender(this.pipelineRepo, pushPandoraClient);
+            logRetrySender = new DataSender(this.pipelineRepo, retryPandoraClient);
+        }
+
+        //init log retry guard
+        this.guard = QiniuLoggingGuard.getInstance(this.logRetryThreadPoolSize);
         if (this.logCacheDir != null && !this.logCacheDir.isEmpty()) {
             try {
                 this.guard.setLogCacheDir(this.logCacheDir);
@@ -190,8 +307,9 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
         if (this.logRetryInterval > 0) {
             this.guard.setLogRetryInterval(this.logRetryInterval);
         }
-        this.guard.setDataSender(this.logSender);
 
+        this.guard.setDataSender(logRetrySender);
+        this.guard.setLogRetryThreadPoolSize(this.logRetryThreadPoolSize);
         //check attributes
         if (workflowRegion == null || workflowRegion.isEmpty()) {
             workflowRegion = DefaultWorkflowRegion;
@@ -202,11 +320,12 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
 
         //try to create appender workflow
         try {
-            QiniuAppenderClient.createAppenderWorkflow(client, pipelineHost, logdbHost, workflowName, workflowRegion,
-                    pipelineRepo, logdbRepo, logdbRetention);
+            QiniuAppenderClient.createAppenderWorkflow(pushPandoraClient, pipelineHost, logdbHost, workflowName,
+                    workflowRegion, pipelineRepo, logdbRepo, logdbRetention);
         } catch (Exception e) {
             e.printStackTrace();
             //@TODO better handle?
+            System.out.println(e.getMessage());
         }
 
         if (autoFlushInterval <= 0) {
@@ -237,7 +356,7 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
             this.executorService.execute(new Runnable() {
                 public void run() {
                     try {
-                        Response response = logSender.send(postBody);
+                        Response response = logPushSender.send(postBody);
                         response.close();
                     } catch (QiniuException e) {
                         //write to guard
@@ -284,7 +403,7 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
             this.executorService.execute(new Runnable() {
                 public void run() {
                     try {
-                        Response response = logSender.send(postBody);
+                        Response response = logPushSender.send(postBody);
                         response.close();
                     } catch (QiniuException e) {
                         //e.printStackTrace();
