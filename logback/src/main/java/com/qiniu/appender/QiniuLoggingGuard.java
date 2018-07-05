@@ -7,10 +7,7 @@ import java.io.*;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Created by jemy on 2018/7/2.
@@ -35,7 +32,6 @@ public class QiniuLoggingGuard {
     private long logRotateIntervalInMillis;
     private long logRotateIntervalInMinutes;
 
-
     private QiniuLoggingGuard() {
         this.logTag = Configs.DefaultLogTag;
         this.logCacheDir = Configs.DefaultLogCacheDir;
@@ -45,7 +41,6 @@ public class QiniuLoggingGuard {
         this.logRotateIntervalInMillis = this.logRotateInterval * 1000;
         this.logRotateIntervalInMinutes = this.logRotateInterval / 60;
         this.retryingFiles = new ConcurrentHashMap<String, Boolean>();
-        this.retryService = Executors.newCachedThreadPool();
         this.currentFileLength = 0;
         this.currentLogCounter = 0;
 
@@ -143,11 +138,14 @@ public class QiniuLoggingGuard {
         }
     }
 
-    public static QiniuLoggingGuard getInstance() {
+    public static QiniuLoggingGuard getInstance(int logRetryThreadPoolSize) {
         if (instance == null) {
             synchronized (QiniuLoggingGuard.class) {
                 if (instance == null) {
                     instance = new QiniuLoggingGuard();
+                    instance.retryService = new ThreadPoolExecutor(0, logRetryThreadPoolSize,
+                            60L, TimeUnit.SECONDS,
+                            new SynchronousQueue<Runnable>());
                 }
             }
         }

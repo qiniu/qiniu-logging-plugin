@@ -277,4 +277,11 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
                 logPushConnectTimeout, logPushReadTimeout, logPushWriteTimeout, logRetryThreadPoolSize,
                 logRetryConnectTimeout, logRetryReadTimeout, logRetryWriteTimeout);
     }
+
+    @Override
+    public boolean stop(long timeout, TimeUnit timeUnit) {
+        this.guard.close();
+        this.executorService.shutdown();
+        return super.stop(timeout, timeUnit);
+    }
 }

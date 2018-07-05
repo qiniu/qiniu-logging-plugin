@@ -2,8 +2,8 @@
 <configuration debug="true">
 
     <appender name="qiniu" class="com.qiniu.appender.LogbackQiniuAppender">
-        <pipelineHost>https://pipeline.qiniu.com</pipelineHost>
-        <logdbHost>https://logdb.qiniu.com</logdbHost>
+        <pipelineHost>https://pipeline.qiniuapi.com</pipelineHost>
+        <logdbHost>https://logdb.qiniuapi.com</logdbHost>
         <workflowName>logdemo1</workflowName>
         <workflowRegion>nb</workflowRegion>
         <pipelineRepo>pipe1</pipelineRepo>
@@ -15,6 +15,14 @@
         <logCacheDir>/tmp/logging</logCacheDir>
         <logRotateInterval>60</logRotateInterval>
         <logRetryInterval>60</logRetryInterval>
+        <logPushThreadPoolSize>20</logPushThreadPoolSize>
+        <logPushConnectTimeout>10</logPushConnectTimeout>
+        <logPushReadTimeout>30</logPushReadTimeout>
+        <logPushWriteTimeout>60</logPushWriteTimeout>
+        <logRetryThreadPoolSize>10</logRetryThreadPoolSize>
+        <logRetryConnectTimeout>10</logRetryConnectTimeout>
+        <logRetryReadTimeout>30</logRetryReadTimeout>
+        <logRetryWriteTimeout>60</logRetryWriteTimeout>
     </appender>
 
     <root level="INFO">
