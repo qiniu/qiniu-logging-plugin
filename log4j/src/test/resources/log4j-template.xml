@@ -12,8 +12,16 @@
         <param name="secretKey" value="sk"/>
         <param name="autoFlushInterval" value="5"/>
         <param name="logCacheDir" value="/tmp/logging"/>
-        <param name="logRotateInterval" value="60"/>
+        <param name="logRotateInterval" value="600"/>
         <param name="logRetryInterval" value="60"/>
+        <param name="logPushThreadPoolSize" value="20"/>
+        <param name="logPushConnectTimeout" value="10"/>
+        <param name="logPushReadTimeout" value="30"/>
+        <param name="logPushWriteTimeout" value="60"/>
+        <param name="logRetryThreadPoolSize" value="10"/>
+        <param name="logRetryConnectTimeout" value="10"/>
+        <param name="logRetryReadTimeout" value="30"/>
+        <param name="logRetryWriteTimeout" value="60"/>
     </appender>
 
     <root>

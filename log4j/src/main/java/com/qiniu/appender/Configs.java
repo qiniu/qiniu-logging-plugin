@@ -21,19 +21,19 @@ public interface Configs {
     // default log retry interval in seconds
     int DefaultLogRetryInterval = 60;
     //log push thread pool size
-    int DefaultLogPushThreadPoolSize = 10;
+    int DefaultLogPushThreadPoolSize = 20;
     // log push http request connect timeout in seconds
     int DefaultLogPushConnectTimeout = 10;
     // log push http request read timeout in seconds
-    int DefaultLogPushReadTimeout = 10;
+    int DefaultLogPushReadTimeout = 30;
     // log push http request write timeout in seconds
-    int DefaultLogPushWriteTimeout = 10;
+    int DefaultLogPushWriteTimeout = 60;
     // log retry thread pool size
     int DefaultLogRetryThreadPoolSize = 10;
     // log retry http request connect timeout in seconds
     int DefaultLogRetryConnectTimeout = 10;
     // log retry http request read timeout in seconds
-    int DefaultLogRetryReadTimeout = 10;
+    int DefaultLogRetryReadTimeout = 30;
     // log retry http request write timeout in seconds
-    int DefaultLogRetryWriteTimeout = 10;
+    int DefaultLogRetryWriteTimeout = 60;
 }

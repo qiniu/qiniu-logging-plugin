@@ -309,7 +309,6 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
         }
 
         this.guard.setDataSender(logRetrySender);
-        this.guard.setLogRetryThreadPoolSize(this.logRetryThreadPoolSize);
         //check attributes
         if (workflowRegion == null || workflowRegion.isEmpty()) {
             workflowRegion = DefaultWorkflowRegion;
@@ -325,7 +324,6 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
         } catch (Exception e) {
             e.printStackTrace();
             //@TODO better handle?
-            System.out.println(e.getMessage());
         }
 
         if (autoFlushInterval <= 0) {
@@ -418,8 +416,10 @@ public class Log4jQiniuAppender extends AppenderSkeleton implements Configs {
         this.rwLock.unlock();
     }
 
+    @Override
     public void close() {
         this.guard.close();
+        this.executorService.shutdown();
     }
 
     public boolean requiresLayout() {
