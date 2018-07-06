@@ -1,5 +1,14 @@
 package com.qiniu.tutorial;
 
+import ch.qos.logback.classic.LoggerContext;
+import com.qiniu.appender.LogbackQiniuAppender;
+import com.qiniu.pandora.common.PandoraClient;
+import com.qiniu.pandora.common.PandoraClientImpl;
+import com.qiniu.pandora.common.QiniuException;
+import com.qiniu.pandora.logdb.LogDBClient;
+import com.qiniu.pandora.pipeline.PipelineClient;
+import com.qiniu.pandora.util.Auth;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -14,28 +25,69 @@ import java.util.concurrent.TimeUnit;
  */
 public class Slf4j {
     @Test
+    public void testException() {
+        Logger logger = LoggerFactory.getLogger(Slf4j.class);
+        try {
+            FileInputStream fs = new FileInputStream(new File("xxx"));
+        } catch (FileNotFoundException e) {
+            //e.printStackTrace();
+            logger.error("this is an file not found exception message", new Throwable(e));
+        }
+        //wait for the flush
+        try {
+            TimeUnit.SECONDS.sleep(60);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    @Test
     public void testSlf4j() {
         Logger logger = LoggerFactory.getLogger(Slf4j.class);
+        int max = 10000;
 
-        while (true) {
-            logger.trace("slf4j trace level 1");
-            logger.debug("slf4j debug level 2");
-            logger.info("slf4j info level 3");
-            logger.warn("slf4j warn level 4");
-            logger.error("slf4j error level 5");
-
+        for (int index = 1; index <= max; index++) {
+            logger.error(index + " this is an error message");
             try {
-                FileInputStream fs = new FileInputStream(new File("xxx"));
-            } catch (FileNotFoundException e) {
-                //e.printStackTrace();
-                logger.error("exception", "o", new Throwable(e));
-            }
-
-            try {
-                TimeUnit.MILLISECONDS.sleep(100);
+                TimeUnit.MILLISECONDS.sleep(1);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+
+        //wait for the flush
+        try {
+            TimeUnit.SECONDS.sleep(60);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testMultiLogger() {
+        int max = 10;
+        Logger logger1 = LoggerFactory.getLogger("logger1");
+        Logger logger2 = LoggerFactory.getLogger("logger2");
+        List<Logger> loggerList = new ArrayList<>();
+        loggerList.add(logger1);
+        loggerList.add(logger2);
+
+        for (Logger logger : loggerList) {
+            for (int index = 1; index <= max; index++) {
+                logger.error(index + " this is an error message");
+                try {
+                    TimeUnit.MILLISECONDS.sleep(1);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        //wait for the flush
+        try {
+            TimeUnit.SECONDS.sleep(60);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }

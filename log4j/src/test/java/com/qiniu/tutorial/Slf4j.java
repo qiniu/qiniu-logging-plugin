@@ -1,74 +1,84 @@
 package com.qiniu.tutorial;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Created by jemy on 2018/6/11.
  */
 public class Slf4j {
-    private int max = 10000;
+    @Test
+    public void testException() {
+        Logger logger = LoggerFactory.getLogger(Slf4j.class);
+        try {
+            FileInputStream fs = new FileInputStream(new File("xxx"));
+        } catch (FileNotFoundException e) {
+            //e.printStackTrace();
+            logger.error("this is an file not found exception message", new Throwable(e));
+        }
+        //wait for the flush
+        try {
+            TimeUnit.SECONDS.sleep(60);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     @Test
     public void testSlf4j() {
         Logger logger = LoggerFactory.getLogger(Slf4j.class);
-        for (int i = 0; i < max; i++) {
-            int rand = (int) (Math.random() * 3);
-            if (rand == 0) {
-                logger.info(i + " slf4j info level");
-            } else if (rand == 1) {
-                logger.warn(i + " slf4j warn level");
-            } else if (rand == 2) {
-                logger.error(i + " slf4j error level");
-            } else {
-                System.out.println(rand);
-            }
+        int max = 10000;
 
+        for (int index = 1; index <= max; index++) {
+            logger.error(index + " this is an error message");
             try {
-                TimeUnit.MILLISECONDS.sleep(30);
+                TimeUnit.MILLISECONDS.sleep(1);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
+        //wait for the flush
         try {
-            TimeUnit.SECONDS.sleep(10);
+            TimeUnit.SECONDS.sleep(60);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
     }
 
     @Test
-    public void testCount() {
-        int sum = 0;
-        File dir = new File("/Users/jemy/Temp/logging");
-        File[] files = dir.listFiles();
-        for (File f : files) {
-            if (f.getName().contains(".log")) {
-                System.out.println(f.getName());
+    public void testMultiLogger() {
+        int max = 10;
+        Logger logger1 = LoggerFactory.getLogger("logger1");
+        Logger logger2 = LoggerFactory.getLogger("logger2");
+        List<Logger> loggerList = new ArrayList<>();
+        loggerList.add(logger1);
+        loggerList.add(logger2);
+
+        for (Logger logger : loggerList) {
+            for (int index = 1; index <= max; index++) {
+                logger.error(index + " this is an error message");
                 try {
-                    BufferedReader fr = new BufferedReader(new FileReader(f));
-                    String line = null;
-                    try {
-                        while ((line = fr.readLine()) != null) {
-                            sum += 1;
-                        }
-                        fr.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                } catch (FileNotFoundException e) {
+                    TimeUnit.MILLISECONDS.sleep(1);
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
         }
-        System.out.println("log count:" + sum);
-        Assert.assertEquals(max, sum);
+        //wait for the flush
+        try {
+            TimeUnit.SECONDS.sleep(60);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

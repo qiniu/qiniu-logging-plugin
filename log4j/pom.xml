@@ -8,7 +8,7 @@
     <artifactId>qiniu-logging-plugin-log4j</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    
+
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
@@ -151,12 +151,14 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.25</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.7.10</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
