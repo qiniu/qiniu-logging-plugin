@@ -5,6 +5,7 @@
         <param name="pipelineHost" value="https://pipeline.qiniu.com"/>
         <param name="logdbHost" value="https://logdb.qiniu.com"/>
         <param name="workflowName" value="logdemo1"/>
+        <param name="workflowDesc" value="log demo 1"/>
         <param name="workflowRegion" value="nb"/>
         <param name="pipelineRepo" value="logpipe1"/>
         <param name="logdbRepo" value="logdb1"/>

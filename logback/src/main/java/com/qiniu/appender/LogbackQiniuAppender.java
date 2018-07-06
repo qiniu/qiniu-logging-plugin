@@ -35,6 +35,7 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
     private String pipelineHost;
     private String logdbHost;
     private String workflowName;
+    private String workflowDesc;
     private String workflowRegion;
     private String pipelineRepo;
     private String logdbRepo;
@@ -81,6 +82,14 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
 
     public void setWorkflowName(String workflowName) {
         this.workflowName = workflowName;
+    }
+
+    public String getWorkflowDesc() {
+        return workflowDesc;
+    }
+
+    public void setWorkflowDesc(String workflowDesc) {
+        this.workflowDesc = workflowDesc;
     }
 
     public String getWorkflowRegion() {
@@ -318,7 +327,7 @@ public class LogbackQiniuAppender extends AppenderBase<ILoggingEvent> implements
         //try to create appender workflow
         try {
             QiniuAppenderClient.createAppenderWorkflow(pushPandoraClient, pipelineHost, logdbHost, workflowName,
-                    workflowRegion, pipelineRepo, logdbRepo, logdbRetention);
+                    workflowDesc, workflowRegion, pipelineRepo, logdbRepo, logdbRetention);
         } catch (Exception e) {
             e.printStackTrace();
             //@TODO better handle?

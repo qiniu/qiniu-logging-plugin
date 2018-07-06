@@ -240,6 +240,7 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
                                                      @PluginAttribute("pipelineHost") String pipelineHost,
                                                      @PluginAttribute("logdbHost") String logdbHost,
                                                      @PluginAttribute("workflowName") String workflowName,
+                                                     @PluginAttribute("workflowDesc") String workflowDesc,
                                                      @PluginAttribute("workflowRegion") String workflowRegion,
                                                      @PluginAttribute("pipelineRepo") String pipelineRepo,
                                                      @PluginAttribute("logdbRepo") String logdbRepo,
@@ -275,8 +276,8 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
 
         //try to create appender workflow
         try {
-            QiniuAppenderClient.createAppenderWorkflow(client, pipelineHost, logdbHost, workflowName, workflowRegion,
-                    pipelineRepo, logdbRepo, logdbRetention);
+            QiniuAppenderClient.createAppenderWorkflow(client, pipelineHost, logdbHost, workflowName, workflowDesc,
+                    workflowRegion, pipelineRepo, logdbRepo, logdbRetention);
         } catch (Exception e) {
             e.printStackTrace();
             return null;//logging appender initialization failed

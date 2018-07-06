@@ -1,14 +1,5 @@
 package com.qiniu.tutorial;
 
-import ch.qos.logback.classic.LoggerContext;
-import com.qiniu.appender.LogbackQiniuAppender;
-import com.qiniu.pandora.common.PandoraClient;
-import com.qiniu.pandora.common.PandoraClientImpl;
-import com.qiniu.pandora.common.QiniuException;
-import com.qiniu.pandora.logdb.LogDBClient;
-import com.qiniu.pandora.pipeline.PipelineClient;
-import com.qiniu.pandora.util.Auth;
-import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

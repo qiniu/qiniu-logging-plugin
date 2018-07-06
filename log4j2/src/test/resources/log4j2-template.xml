@@ -5,6 +5,7 @@
                              pipelineHost="https://pipeline.qiniu.com"
                              logdbHost="https://logdb.qiniu.com"
                              workflowName="logdemo1"
+                             workflowDesc="log demo 1"
                              workflowRegion="nb"
                              pipelineRepo="logpipe1"
                              logdbRepo="logdb1"

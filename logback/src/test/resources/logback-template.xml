@@ -5,6 +5,7 @@
         <pipelineHost>https://pipeline.qiniuapi.com</pipelineHost>
         <logdbHost>https://logdb.qiniuapi.com</logdbHost>
         <workflowName>logdemo1</workflowName>
+        <workflowDesc>log demo 1</workflowDesc>
         <workflowRegion>nb</workflowRegion>
         <pipelineRepo>pipe1</pipelineRepo>
         <logdbRepo>logdb1</logdbRepo>

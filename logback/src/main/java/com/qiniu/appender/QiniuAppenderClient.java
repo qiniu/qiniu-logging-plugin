@@ -19,15 +19,18 @@ public class QiniuAppenderClient implements ValueType, Analyzer, ExportWhence, W
      * Create appender workflow
      *
      * @param client         pandora client
+     * @param pipelineHost   pandora pipeline host
+     * @param logdbHost      pandora logdb host
      * @param workflowName   pandora workflow name
+     * @param workflowDesc   workflow description
      * @param workflowRegion pandora workflow region
      * @param pipelineRepo   pandora pipeline repo name
      * @param logdbRepo      pandora logdb repo name
      * @param logdbRetention pandora logdb retention days
      */
     public static void createAppenderWorkflow(PandoraClient client, String pipelineHost, String logdbHost,
-                                              String workflowName, String workflowRegion, String pipelineRepo,
-                                              String logdbRepo, String logdbRetention)
+                                              String workflowName, String workflowDesc, String workflowRegion,
+                                              String pipelineRepo, String logdbRepo, String logdbRetention)
             throws Exception {
         PipelineClient pipelineClient = null;
         if (pipelineHost != null && !pipelineHost.isEmpty()) {
@@ -47,6 +50,7 @@ public class QiniuAppenderClient implements ValueType, Analyzer, ExportWhence, W
         if (!pipelineClient.workflowExists(workflowName)) {
             CreateWorkflowInput createWorkflowInput = new CreateWorkflowInput();
             createWorkflowInput.workflowName = workflowName;
+            createWorkflowInput.comment = workflowDesc;
             createWorkflowInput.region = workflowRegion;
             pipelineClient.createWorkflow(createWorkflowInput);
         }
