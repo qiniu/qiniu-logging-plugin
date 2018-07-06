@@ -21,13 +21,7 @@
 
 ## 下载
 
-|日志库|版本|链接|
-|---|---|---|
-|log4j|1.0.0| http://devtools.qiniu.com/qiniu-logging-plugin-log4j-1.0.0.tar.gz |
-|log4j2|1.0.0| http://devtools.qiniu.com/qiniu-logging-plugin-log4j2-1.0.0.tar.gz |
-|logback|1.0.0| http://devtools.qiniu.com/qiniu-logging-plugin-logback-1.0.0.tar.gz |
-
-或者可以通过 Maven 进行相关 Jar 的下载。
+可以通过 Maven 进行相关 Jar 的下载。
 
 ### log4j
 
