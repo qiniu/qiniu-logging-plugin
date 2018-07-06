@@ -73,6 +73,18 @@
 
 配置模版中各个参数的详细说明，请参考 [配置参数详解](docs/3.配置参数详解.md)
 
+在模版配置中会有各个参数的设置情况，但是实际上，达到可用状态的配置最多只需要配置如下几个参数：
+
+```
+workflowName = logdemo1
+pipelineRepo = logpipe1
+logdbRepo = logdb1
+accessKey = ak
+secretKey = sk
+```
+
+其他的参数，一般情况下采用默认值即可，如果希望自行定义，请详细了解每个参数的含义然后进行设置。
+
 ## 实战
 
 [ElasticSearch日志收集案例](https://github.com/jemygraw/qiniu-logging-plugin/wiki/ElasticSearch%E6%97%A5%E5%BF%97%E6%94%B6%E9%9B%86%E6%A1%88%E4%BE%8B)
