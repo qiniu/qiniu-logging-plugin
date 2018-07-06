@@ -31,3 +31,16 @@ targets/*
 .classpath
 .project
 *.iml
+
+log4j.properties
+log4j-debug.properties
+log4j.xml
+log4j-debug.xml
+log4j2.properties
+log4j2-debug.properties
+log4j2.xml
+log4j2-debug.xml
+logback.xml
+logback-test.xml
+logback-debug.xml
+logback-test-debug.xml
