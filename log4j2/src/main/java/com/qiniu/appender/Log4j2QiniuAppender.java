@@ -76,7 +76,7 @@ public class Log4j2QiniuAppender extends AbstractAppender implements Configs {
 
         this.batch = new Batch();
         this.queue = new ArrayBlockingQueue<>(51);
-        this.executorService = new ThreadPoolExecutor(1, logPushThreadPoolSize,
+        this.executorService = new ThreadPoolExecutor(2, logPushThreadPoolSize,
                 60L, TimeUnit.SECONDS, this.queue);
 
         //init log push

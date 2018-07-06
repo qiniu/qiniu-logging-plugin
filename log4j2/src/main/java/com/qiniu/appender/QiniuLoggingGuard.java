@@ -89,7 +89,7 @@ public class QiniuLoggingGuard {
                 File[] readyLogFiles = logCacheDirFile.listFiles(this.logFileFilter);
                 if (readyLogFiles != null) {
                     for (final File logFile : readyLogFiles) {
-                        if (this.queue.size() >= 1000) {
+                        if (this.queue.size() >= 200) {
                             break; // or  continue;
                         }
                         if (logFile.getName().endsWith(".log")) {
@@ -147,8 +147,8 @@ public class QiniuLoggingGuard {
             synchronized (QiniuLoggingGuard.class) {
                 if (instance == null) {
                     instance = new QiniuLoggingGuard();
-                    instance.queue = new ArrayBlockingQueue<>(1001);
-                    instance.retryService = new ThreadPoolExecutor(1, logRetryThreadPoolSize,
+                    instance.queue = new ArrayBlockingQueue<>(201);
+                    instance.retryService = new ThreadPoolExecutor(0, logRetryThreadPoolSize,
                             60L, TimeUnit.SECONDS, instance.queue);
                 }
             }
