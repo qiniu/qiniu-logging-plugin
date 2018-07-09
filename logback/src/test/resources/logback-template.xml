@@ -2,8 +2,8 @@
 <configuration debug="true">
 
     <appender name="qiniu" class="com.qiniu.appender.LogbackQiniuAppender">
-        <pipelineHost>https://pipeline.qiniuapi.com</pipelineHost>
-        <logdbHost>https://logdb.qiniuapi.com</logdbHost>
+        <pipelineHost>https://pipeline.qiniu.com</pipelineHost>
+        <logdbHost>https://logdb.qiniu.com</logdbHost>
         <workflowName>logdemo1</workflowName>
         <workflowDesc>log demo 1</workflowDesc>
         <workflowRegion>nb</workflowRegion>
